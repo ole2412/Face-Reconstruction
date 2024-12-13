@@ -26,6 +26,35 @@ This will create a file with the 68 landmarks `<ImageName>_landmarks.anl` and a 
 - models
     - PIPNet
         - pipnet_resnet101_10x68x32x256_300w.pth
+    - BFM17
+        - model2017-1_face12_nomouth.h5
 - src
 - tools
 ```
+
+## Cmake
+Assuming Linux system.
+
+Install prerequisites on your system:
+```
+sudo apt update
+sudo apt install cmake g++ build-essential
+
+sudo apt install libeigen3-dev
+
+```
+
+From project directory:
+```
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+```
+
+## Execute the main
+From build dir:
+```
+./main <ImageName>
+```
+Note that <ImageName> refers to one of the images inside datasets eg. "Ole1"
