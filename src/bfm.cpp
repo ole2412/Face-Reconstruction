@@ -28,7 +28,6 @@ void BFM::load_bfm()
 {
     std::cout << "Start loading bfm..." << std::endl;
 
-    std::cout << "Look at bfm.cpp - load_bfm() function has to be writte" << std::endl;
     try
     {
         // TODO 1: load shape, expr and color pca, variance and mean to
@@ -125,11 +124,11 @@ void BFM::load_bfm()
             landmarks = readLandmarks(m_landmark_path);
 
         // read landmarks from file
-        std::cout << "read landmarks from file：" << std::endl;
-        for (int index : landmarks)
-        {
-            std::cout << index << std::endl;
-        }
+        // std::cout << "read landmarks from file：" << std::endl;
+        // for (int index : landmarks)
+        // {
+        //     std::cout << index << std::endl;
+        // }
     }
     catch (H5::Exception &e)
     {
