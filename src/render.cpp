@@ -35,16 +35,17 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const E
 }
 
 void generateAndOutputMesh(BFM* bfm, const std::string& outputFile) {
-    // TODO 1.1: write a parameters class where params are stored that we optimize for
+    // TODO 1: visualize the vertices that belong to landmark indices differently
+    // (to ensure that the landmarks are correct)
+
+    // TODO 2: write a parameters class where params are stored that we optimize for
     // give that param object to this function
 
-    // TODO 1.2: apply fov, translation, rotation to the results
 
-    // TODO 2.1: (independet of previous tasks!): write function to transform geometry to 2D
+    // TODO 3 (independet of previous tasks!): apply color from the model to the mesh 
 
-    // TODO 2.2: add input_image as param and project the 2D geometry to the image
-    // store (return and store then) the image
-    
+    // TODO 4 (independet of previous tasks!): write a seperate function to transform vertexPositions to 2D image coordinates
+
     Eigen::VectorXd shape_var = bfm->get_shape_var();
     Eigen::VectorXd expr_var = bfm->get_expr_var();
 

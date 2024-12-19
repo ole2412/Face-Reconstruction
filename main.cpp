@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <iostream>
 #include "src/bfm.h"
+#include "src/render.h"
+
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -18,10 +20,16 @@ int main(int argc, char* argv[]) {
 
     // TODO: load the face model
     BFM bfm = BFM();
+    std::cout << bfm.get_shape_pca().rows() << " x " << bfm.get_shape_pca().cols() << std::endl;
 
     // TODO: Optimize (as a first step, just setup the class and return the mesh for default parameters setting (eg all model params = 0) and check if the mesh makes sense)
 
     // TODO: Render results back to image (how can we display the mesh on top of our image?)
 
+    generateAndOutputMesh(&bfm, "../output/" + image_name + ".obj");
+
+    // &bfm gives a pointer to the bfm object
+
     return 0;
 }
+
