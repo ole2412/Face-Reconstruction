@@ -29,7 +29,7 @@ public:
     inline Eigen::VectorXd &get_color_mean() { return color_mean; }
 
     inline Eigen::VectorXi &get_current_faces() { return triangles; }
-    inline unsigned int Get_LandmarkIdx(int i) { return landmark_indices[i]; }
+    inline std::vector<int> &get_landmark_indices() { return landmark_indices; }
 
     inline unsigned int get_no_vertices() { return no_vertices; }
     inline unsigned int get_expr_size() { return expr_size; }

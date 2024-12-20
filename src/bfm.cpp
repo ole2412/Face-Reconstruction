@@ -120,15 +120,13 @@ void BFM::load_bfm()
         // TODO 3: where are the 68 landmarks indices?
         // load them to the landmark_indices variable
 
-        std::vector<int>
-            landmarks = readLandmarks(m_landmark_path);
+        landmark_indices = readLandmarks(m_landmark_path);
 
-        // read landmarks from file
-        // std::cout << "read landmarks from file：" << std::endl;
-        // for (int index : landmarks)
-        // {
-        //     std::cout << index << std::endl;
+        // std::cout << "Landmark indices: ";
+        // for (const int& index : landmark_indices) {
+        //     std::cout << index << " ";
         // }
+
     }
     catch (H5::Exception &e)
     {
