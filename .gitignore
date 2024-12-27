@@ -2,3 +2,7 @@ models/PIPNet
 models/BFM17
 build/
 output/
+CMakeLists.txt
+.vscode/c_cpp_properties.json
+/.vscode
+.DS_Store
