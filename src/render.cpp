@@ -1,8 +1,14 @@
 #include "render.h"
+#include "costFunctions.h"
+#include "optimizationParameters.h"
+#include "bfm.h"
+#include "optimizer.h"
+
 #include <fstream>
 #include <iostream>
 #include <Eigen/Dense>
-#include "bfm.h"
+
+
 
 void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks = false) {
     /**
@@ -59,7 +65,33 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const E
     std::cout << "Mesh successfully written to " << filename << std::endl;
 }
 
-void generateAndOutputMesh(BFM* bfm, const std::string& outputFile) {
+//TODO put this in another class?
+// For reading our own source landmarks
+std::vector<Eigen::Vector2d> readObservedLandmarks(const std::string &filePath)
+{
+    std::vector<Eigen::Vector2d> observed_landmarks; 
+
+    std::ifstream file(filePath);
+    if (!file.is_open())
+    {
+        std::cerr << "Could not open the file: " << filePath << std::endl;
+        return observed_landmarks;
+    }
+
+    double x, y;
+    // Read pairs of X and Y coordinates 
+    while (file >> x >> y)
+    {
+        observed_landmarks.emplace_back(x, y);
+    }
+
+    file.close();
+
+    return observed_landmarks;
+}
+
+
+void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::string& observedLandmarksPath) {
     /**
      * @brief Generates a 3D mesh using the Basel Face Model and writes it to an OBJ file.
      * 
@@ -74,6 +106,37 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile) {
 
     // TODO 2: write a parameters class where params are stored that we optimize for
     // give that param object to this function
+
+    // Initialize vector to store 3D landmark positions
+    std::vector<Eigen::Vector3d> model_landmarks;
+    model_landmarks.reserve(landmarkIndices.size());
+
+    // TODO fill the observed_landmarks
+    std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(observedLandmarksPath);;
+
+    // Retrieve 3D coordinates of the landmarks from the BFM model
+    for (int index : landmarkIndices) {
+        // TODO implement a method that gets the 3D vertex corresponding to the landmark index: bfm->get_vertex(index)
+        Eigen::Vector3d vertex;
+        model_landmarks.push_back(vertex);
+    }
+
+    //TODO define IMAGE_WIDTH and HEIGHT which is needed for calculating camera intrinsics
+    constexpr int IMAGE_WIDTH = 1920;  
+    constexpr int IMAGE_HEIGHT = 1080;
+
+    OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
+
+    // Print initial parameters for debugging
+    params.printParameters();
+    Optimizer optimizer;
+
+    // Optimize landmarks
+    optimizer.optimizeSparse(params, observed_landmarks, model_landmarks, params.image_width, params.image_height);
+
+
+    // Print parameters after optimization
+    params.printParameters();
 
 
     // TODO 3 (independet of previous tasks!): apply color from the model to the mesh 
@@ -97,14 +160,14 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile) {
 
     for (int v = 0; v < nVertices; v++) {
         for (int i = 0; i < color_shape_size; i++) {
-            double shapeFactor = sqrt(shape_var[i]) * 0;
+            double shapeFactor = sqrt(shape_var[i]) * params.shapeCoefficients[i];
             vertexPosition[3 * v] += shapeFactor * shape_pca(3 * v, i);
             vertexPosition[3 * v + 1] += shapeFactor * shape_pca(3 * v + 1, i);
             vertexPosition[3 * v + 2] += shapeFactor * shape_pca(3 * v + 2, i);
         }
 
         for (int i = 0; i < expr_size; i++) {
-            double exprFactor = sqrt(expr_var[i]) * 0;
+            double exprFactor = sqrt(expr_var[i]) * params.expressionCoefficients[i];
             vertexPosition[3 * v] += exprFactor * expr_pca(3 * v, i);
             vertexPosition[3 * v + 1] += exprFactor * expr_pca(3 * v + 1, i);
             vertexPosition[3 * v + 2] += exprFactor * expr_pca(3 * v + 2, i);
@@ -113,5 +176,5 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile) {
 
     Eigen::VectorXi triangles = bfm->get_current_faces();
 
-    outputMeshToObj(vertexPosition, triangles, outputFile, landmarkIndices);
+    outputMeshToObj(vertexPosition, triangles, outputFile, landmarkIndices, true);
 }
