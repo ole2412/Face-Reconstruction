@@ -4,6 +4,6 @@
 #include "bfm.h"
 #include <string>
 
-void generateAndOutputMesh(BFM* bfm, const std::string& outputFile);
+void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::string& landmarksFile);
 
 #endif

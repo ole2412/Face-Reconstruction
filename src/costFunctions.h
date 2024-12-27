@@ -20,7 +20,7 @@ struct SparseTermCostFunction {
     bool operator()(const T* const translation, const T* const rotation, const T* const fov, T* residuals) const {
         // Rotate the model landmark using the rotation vector
         T rotated_point[3];
-        ceres::AngleAxisRotatePoint(rotation, model_landmark.data(), rotated_point);
+        //ceres::AngleAxisRotatePoint(rotation, model_landmark.data(), rotated_point);
 
         // Apply translation
         rotated_point[0] += translation[0];
