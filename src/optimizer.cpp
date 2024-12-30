@@ -30,6 +30,9 @@ void Optimizer::optimizeSparse(
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;
     options.minimizer_progress_to_stdout = true;
+    options.function_tolerance = 1e-12; 
+    options.max_num_iterations = 1000;    
+    options.parameter_tolerance = 1e-12;    options.minimizer_progress_to_stdout = true;
 
     // Solve the problem
     ceres::Solver::Summary summary;
@@ -37,7 +40,6 @@ void Optimizer::optimizeSparse(
 
     // Final results
     std::cout << summary.FullReport() << std::endl;
-    params.printParameters();
 }
 
 // TODO add the Dense optimizer and Reg optimizer

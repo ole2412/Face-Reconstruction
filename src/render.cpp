@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <Eigen/Dense>
-
+#include <ceres/ceres.h>
 
 
 void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks = false) {
@@ -90,6 +90,38 @@ std::vector<Eigen::Vector2d> readObservedLandmarks(const std::string &filePath)
     return observed_landmarks;
 }
 
+void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::Vector3d& rotation, const Eigen::Vector3d& translation) {
+    /**
+     * @brief Applies rotation (using AngleAxis) and translation to vertex positions.
+     * 
+     * @param vertexPosition A matrix containing the 3D coordinates of the vertices (flattened as a 1D array).
+     * @param rotation A vector of rotation angles [rx, ry, rz] in radians.
+     * @param translation A translation vector [tx, ty, tz].
+     */
+    long nVertices = vertexPosition.size() / 3;
+
+    // Create an AngleAxis for the rotation
+    Eigen::AngleAxisd angleAxisX(rotation[0], Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd angleAxisY(rotation[1], Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd angleAxisZ(rotation[2], Eigen::Vector3d::UnitZ());
+
+    // Combined rotation
+    Eigen::Matrix3d rotationMatrix = (angleAxisZ * angleAxisY * angleAxisX).toRotationMatrix();
+
+    for (int v = 0; v < nVertices; ++v) {
+        Eigen::Vector3d vertex(vertexPosition[3 * v], vertexPosition[3 * v + 1], vertexPosition[3 * v + 2]);
+
+        // Apply rotation and translation
+        vertex = rotationMatrix * vertex + translation;
+
+        vertexPosition[3 * v] = vertex[0];
+        vertexPosition[3 * v + 1] = vertex[1];
+        vertexPosition[3 * v + 2] = vertex[2];
+    }
+}
+
+
+
 
 void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::string& observedLandmarksPath) {
     /**
@@ -114,18 +146,28 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     // TODO fill the observed_landmarks
     std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(observedLandmarksPath);;
 
-    // Retrieve 3D coordinates of the landmarks from the BFM model
-    for (int index : landmarkIndices) {
-        // TODO implement a method that gets the 3D vertex corresponding to the landmark index: bfm->get_vertex(index)
-        Eigen::Vector3d vertex;
-        model_landmarks.push_back(vertex);
-    }
 
     //TODO define IMAGE_WIDTH and HEIGHT which is needed for calculating camera intrinsics
-    constexpr int IMAGE_WIDTH = 1920;  
-    constexpr int IMAGE_HEIGHT = 1080;
+    constexpr int IMAGE_WIDTH = 3264;  
+    constexpr int IMAGE_HEIGHT = 1836;
 
     OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
+
+
+    // Get 3D coordinates of a landmarks vertex from the BFM model
+    for (int index : landmarkIndices) {
+        Eigen::Vector3d vertex = bfm->get_shape_mean().segment<3>(3 * index);
+
+        // Add PCA contributions for the shape coefficients
+        for (int i = 0; i < bfm->get_shape_size(); ++i) {
+            double shapeFactor = sqrt(bfm->get_shape_var()[i]) * params.shapeCoefficients[i];
+            vertex[0] += shapeFactor * bfm->get_shape_pca()(3 * index, i);
+            vertex[1] += shapeFactor * bfm->get_shape_pca()(3 * index + 1, i);
+            vertex[2] += shapeFactor * bfm->get_shape_pca()(3 * index + 2, i);
+        }
+
+        model_landmarks.push_back(vertex);
+    }
 
     // Print initial parameters for debugging
     params.printParameters();
@@ -136,6 +178,7 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
 
     // Print parameters after optimization
+    std::cout << "Parameters after Sparse Optimization" << std::endl;
     params.printParameters();
 
 
@@ -174,7 +217,16 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
         }
     }
 
+
+
+    // Apply transformations (rotation and translation)
+    applyTransformationsToVertices(vertexPosition, params.rotation, params.translation);
+
+
     Eigen::VectorXi triangles = bfm->get_current_faces();
 
+
     outputMeshToObj(vertexPosition, triangles, outputFile, landmarkIndices, true);
+
+
 }
