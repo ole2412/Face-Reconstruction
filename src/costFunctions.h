@@ -2,7 +2,8 @@
 #define COST_FUNCTIONS_H
 
 #include "optimizationParameters.h"
-#include <ceres/ceres.h>           
+#include <ceres/ceres.h>
+#include <ceres/rotation.h>
 #include <Eigen/Dense>  
 
 namespace CostFunctions {
