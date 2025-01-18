@@ -8,6 +8,9 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <ceres/ceres.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <opencv2/opencv.hpp>
 
 
 void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks = false) {
@@ -54,9 +57,9 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const E
     long nFaces = faceIndices.size() / 3;
     std::cout << "nFaces: " << nFaces << std::endl;
     for (int f = 0; f < nFaces; f++) {
-        int v1 = faceIndices[f + 0 * nFaces] + 1;
-        int v2 = faceIndices[f + 1 * nFaces] + 1;
-        int v3 = faceIndices[f + 2 * nFaces] + 1;
+        int v1 = faceIndices[f + 0 * nFaces];
+        int v2 = faceIndices[f + 1 * nFaces];
+        int v3 = faceIndices[f + 2 * nFaces];
 
         outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
     }
@@ -235,5 +238,94 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
     outputMeshToObj(vertexPosition, triangles, outputFile, landmarkIndices, true);
 
+    outputMeshToImage(vertexPosition, triangles, outputFile + ".jpg", IMAGE_WIDTH, IMAGE_HEIGHT);
+}
 
+void outputMeshToImage(const Eigen::Matrix<double, -1, 1>& vertices, const Eigen::VectorXi& triangles, const std::string& outputFile, int width, int height) {
+    /*
+    * @brief Renders a 3D mesh to an image.
+    *
+    * This function renders a 3D mesh to an image using the given vertex positions and triangles.
+    * The rendered image is saved to a file.
+    * 
+    * @param vertices A matrix containing the 3D coordinates of the vertices.
+    * @param triangles A vector containing the indices defining the faces of the mesh.
+    * @param outputFile The name of the output image file.
+    * @param image_width The width of the output image.
+    * @param image_height The height of the output image.  
+    */
+    // 3D coordinates are given through vertices, transform them to 2D, plot on image and save
+
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW" << std::endl;
+        return;
+    }
+
+    // Create a windowed mode window and its OpenGL context
+    GLFWwindow* window;
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    window = glfwCreateWindow(width, height, "Render", NULL, NULL);
+    if (!window) {
+        glfwTerminate();
+        std::cerr << "Failed to create GLFW window" << std::endl;
+        return;
+    }
+
+    // Make the window's context current
+    glfwMakeContextCurrent(window);
+
+    // Initialize GLEW
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW" << std::endl;
+        return;
+    }
+
+    // Set up the viewport
+    glViewport(0, 0, width, height);
+
+    // Set up the modelview matrix
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    // Clear the color buffer
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Set up the color
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    // Draw the mesh
+    glBegin(GL_TRIANGLES);
+
+    long nVertices = vertices.size() / 3;
+    for (int v = 0; v < nVertices; v++) {
+        double x = vertices[3 * v];
+        double y = vertices[3 * v + 1];
+        double z = vertices[3 * v + 2];
+
+        glVertex2d(x, y);
+        // set color to red
+        glColor3f(255, 0, 0);
+    }
+
+    glEnd();
+
+    // Read the pixels from the frame buffer
+    unsigned char* pixels = new unsigned char[3 * width * height];
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+    // Create an OpenCV image
+    cv::Mat image(height, width, CV_8UC3, pixels);
+
+    // Flip the image
+    cv::flip(image, image, 0);
+
+    // Save the image
+    cv::imwrite(outputFile, image);
+
+    // Terminate GLFW
+    glfwTerminate();
+
+    delete[] pixels;
+    
+    return;
 }
