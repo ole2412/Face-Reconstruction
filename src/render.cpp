@@ -156,7 +156,7 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
     // Get 3D coordinates of a landmarks vertex from the BFM model
     for (int index : landmarkIndices) {
-        Eigen::Vector3d vertex = bfm->get_shape_mean().segment<3>(3 * index);
+        Eigen::Vector3d vertex = bfm->get_shape_mean().segment<3>(3 * index) + bfm->get_expr_mean().segment<3>(3 * index);
 
         // Add PCA contributions for the shape coefficients
         for (int i = 0; i < bfm->get_shape_size(); ++i) {
@@ -164,6 +164,13 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
             vertex[0] += shapeFactor * bfm->get_shape_pca()(3 * index, i);
             vertex[1] += shapeFactor * bfm->get_shape_pca()(3 * index + 1, i);
             vertex[2] += shapeFactor * bfm->get_shape_pca()(3 * index + 2, i);
+        }
+
+        for (int i = 0; i < bfm->get_expr_size(); ++i) {
+            double exprFactor = sqrt(bfm->get_expr_var()[i]) * params.expressionCoefficients[i];
+            vertex[0] += exprFactor * bfm->get_expr_pca()(3 * index, i);
+            vertex[1] += exprFactor * bfm->get_expr_pca()(3 * index + 1, i);
+            vertex[2] += exprFactor * bfm->get_expr_pca()(3 * index + 2, i);
         }
 
         model_landmarks.push_back(vertex);
