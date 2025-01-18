@@ -2,8 +2,7 @@
 #define COST_FUNCTIONS_H
 
 #include "optimizationParameters.h"
-#include <ceres/ceres.h>
-#include <ceres/rotation.h>
+#include <ceres/ceres.h>           
 #include <Eigen/Dense>  
 
 namespace CostFunctions {
@@ -19,50 +18,31 @@ struct SparseTermCostFunction {
 
     template <typename T>
     bool operator()(const T* const translation, const T* const rotation, const T* const fov, T* residuals) const {
-        // Rotate the model landmark using the rotation vector
 
-        // T rotated_point[3] = {T(0), T(0), T(0)};
 
-        // std::cout << "rotation: " << rotation << std::endl;
+        // Print the rotation values
+        std::cout << "rotation: ";
+        for (int i = 0; i < 3; ++i) {
+            std::cout << rotation[i] << " ";
+        }
+        std::cout << std::endl;
 
-        // // Convert Euler angles (rotation) to a rotation matrix
-        // T rotation_matrix[9]; // 3x3 rotation matrix
-        // ceres::EulerAnglesToRotationMatrix<T>(rotation, 3, rotation_matrix);
+        T rotated_point[3];
+        //ceres::AngleAxisRotatePoint(rotation, model_landmark.data(), rotated_point);
 
-        // // Rotate the model landmark
-        // for (int i = 0; i < 3; ++i) {
-        //     rotated_point[i] = T(0);
-        //     for (int j = 0; j < 3; ++j) {
-        //         rotated_point[i] += rotation_matrix[i * 3 + j] * model_landmark_array[j];
-        //     }
-        // }
-    // Convert Euler angles (rotation) to a rotation matrix using Ceres
-        T rotation_matrix[9];
-        T eulerAngles[3] = {rotation[0], rotation[1], rotation[2]};
-        ceres::EulerAnglesToRotationMatrix(eulerAngles, 3, rotation_matrix);
-
-        // Populate Eigen matrix for rotation
-        Eigen::Matrix<T, 3, 3> rotationMatrix;
-        rotationMatrix << rotation_matrix[0], rotation_matrix[1], rotation_matrix[2],
-                        rotation_matrix[3], rotation_matrix[4], rotation_matrix[5],
-                        rotation_matrix[6], rotation_matrix[7], rotation_matrix[8];
-
-        // Convert model landmark to Eigen vector
-        Eigen::Matrix<T, 3, 1> model_landmark_vec;
-        model_landmark_vec << T(model_landmark[0]), T(model_landmark[1]), T(model_landmark[2]);
-
-        // Rotate the model landmark
-        Eigen::Matrix<T, 3, 1> rotated_point = rotationMatrix * model_landmark_vec;
+        T landmark_array[3] = {T(model_landmark[0]), T(model_landmark[1]), T(model_landmark[2])};
+        ceres::AngleAxisRotatePoint(rotation, landmark_array, rotated_point);
 
         // Apply translation
         rotated_point[0] += translation[0];
         rotated_point[1] += translation[1];
         rotated_point[2] += translation[2];
 
+
         // Compute focal lengths fx and fy based on the image dimensions and field of view (fov)
         // from https://flightmare.readthedocs.io/en/latest/first_steps/faq.html
-        T fx = T(image_width) * T(0.5) / ceres::tan(T(0.5) * *fov * T(M_PI) / T(180.0));
-        T fy = T(image_height) * T(0.5) / ceres::tan(T(0.5) * *fov * T(M_PI) / T(180.0));
+        T fx = T(image_width) * T(0.5) / ceres::tan(T(0.5) * (fov[0]) * T(M_PI) / T(180.0));
+        T fy = T(image_height) * T(0.5) / ceres::tan(T(0.5) * (fov[0]) * T(M_PI) / T(180.0));
 
         T X_temp = rotated_point[0] * fx + rotated_point[2] * T(image_width / 2);
         T Y_temp = rotated_point[1] * fy + rotated_point[2] * T(image_height / 2);
@@ -75,6 +55,9 @@ struct SparseTermCostFunction {
         // Compute residuals (error) L2 norm, ceres handles the summation and squaring
         residuals[0] = projected_x - T(observed_landmark[0]);
         residuals[1] = projected_y - T(observed_landmark[1]);
+
+        std::cout << "residual x: " << residuals[0] << std::endl;
+
         return true;
     }
 
