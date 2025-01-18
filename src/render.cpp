@@ -101,12 +101,25 @@ void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition
     long nVertices = vertexPosition.size() / 3;
 
     // Create an AngleAxis for the rotation
-    Eigen::AngleAxisd angleAxisX(rotation[0], Eigen::Vector3d::UnitX());
-    Eigen::AngleAxisd angleAxisY(rotation[1], Eigen::Vector3d::UnitY());
-    Eigen::AngleAxisd angleAxisZ(rotation[2], Eigen::Vector3d::UnitZ());
+    
+    
+    // Convert Euler angles (rotation) to a rotation matrix
+    // Initialize the rotation matrix (3x3 = 9 elements)
+    double rotation_matrix[9];
+    double eulerAngles[3] = {rotation[0], rotation[1], rotation[2]};
+    // Convert Euler angles to a 3x3 rotation matrix
+    ceres::EulerAnglesToRotationMatrix(eulerAngles, 3, rotation_matrix);
+
+    //Eigen::AngleAxisd angleAxisX(rotation[0], Eigen::Vector3d::UnitX());
+    //Eigen::AngleAxisd angleAxisY(rotation[1], Eigen::Vector3d::UnitY());
+    //Eigen::AngleAxisd angleAxisZ(rotation[2], Eigen::Vector3d::UnitZ());
 
     // Combined rotation
-    Eigen::Matrix3d rotationMatrix = (angleAxisZ * angleAxisY * angleAxisX).toRotationMatrix();
+    //Eigen::Matrix3d rotationMatrix = (angleAxisZ * angleAxisY * angleAxisX).toRotationMatrix();
+    Eigen::Matrix3d rotationMatrix;
+    rotationMatrix << rotation_matrix[0], rotation_matrix[1], rotation_matrix[2],
+                      rotation_matrix[3], rotation_matrix[4], rotation_matrix[5],
+                      rotation_matrix[6], rotation_matrix[7], rotation_matrix[8];
 
     for (int v = 0; v < nVertices; ++v) {
         Eigen::Vector3d vertex(vertexPosition[3 * v], vertexPosition[3 * v + 1], vertexPosition[3 * v + 2]);
@@ -146,13 +159,15 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     // TODO fill the observed_landmarks
     std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(observedLandmarksPath);;
 
+    //for (int index = 0 ; index <  5; index++) {
+    //    std::cout << "model landmarks: " << model_landmarks[index] << std::endl;
+    //}
 
     //TODO define IMAGE_WIDTH and HEIGHT which is needed for calculating camera intrinsics
-    constexpr int IMAGE_WIDTH = 3264;  
-    constexpr int IMAGE_HEIGHT = 1836;
+    constexpr int IMAGE_WIDTH = 1440;  
+    constexpr int IMAGE_HEIGHT = 960;
 
     OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
-
 
     // Get 3D coordinates of a landmarks vertex from the BFM model
     for (int index : landmarkIndices) {
@@ -168,6 +183,10 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
         model_landmarks.push_back(vertex);
     }
+
+    //for (int index = 0 ; index <  5; index++) {
+    //    std::cout << "model landmarks: " << model_landmarks[index] << std::endl;
+    //}
 
     // Print initial parameters for debugging
     params.printParameters();

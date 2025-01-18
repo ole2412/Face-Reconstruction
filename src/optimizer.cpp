@@ -15,7 +15,8 @@ void Optimizer::optimizeSparse(
     ceres::Problem problem;
 
     // Add residual blocks for each landmark
-    for (size_t i = 0; i < observed_landmarks.size(); ++i) {
+    //observed_landmarks.size()
+    for (size_t i = 0; i < 68; ++i) {
         ceres::CostFunction* sparse_cost = CostFunctions::SparseTermCostFunction::Create(observed_landmarks[i], model_landmarks[i], params.image_width, params.image_height);
         problem.AddResidualBlock(
             sparse_cost,
