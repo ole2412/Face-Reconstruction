@@ -126,7 +126,7 @@ void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition
 
 
 
-void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::string& observedLandmarksPath) {
+void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::string& observedLandmarksPath, cv::Mat image) {
     /**
      * @brief Generates a 3D mesh using the Basel Face Model and writes it to an OBJ file.
      * 
@@ -238,94 +238,55 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
     outputMeshToObj(vertexPosition, triangles, outputFile, landmarkIndices, true);
 
-    outputMeshToImage(vertexPosition, triangles, outputFile + ".jpg", IMAGE_WIDTH, IMAGE_HEIGHT);
+    outputMeshToImage(bfm, vertexPosition, triangles, params, image);
 }
 
-void outputMeshToImage(const Eigen::Matrix<double, -1, 1>& vertices, const Eigen::VectorXi& triangles, const std::string& outputFile, int width, int height) {
-    /*
-    * @brief Renders a 3D mesh to an image.
-    *
-    * This function renders a 3D mesh to an image using the given vertex positions and triangles.
-    * The rendered image is saved to a file.
-    * 
-    * @param vertices A matrix containing the 3D coordinates of the vertices.
-    * @param triangles A vector containing the indices defining the faces of the mesh.
-    * @param outputFile The name of the output image file.
-    * @param image_width The width of the output image.
-    * @param image_height The height of the output image.  
-    */
-    // 3D coordinates are given through vertices, transform them to 2D, plot on image and save
+void outputMeshToImage(BFM* bfm, const Eigen::Matrix<double, -1, 1>& vertices, const Eigen::VectorXi& triangles, const OptimizationParameters& params,  cv::Mat image) {
 
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        return;
-    }
+    auto window = setup_initial_rendering_window(image.cols, image.rows);
 
-    // Create a windowed mode window and its OpenGL context
+    // approach:
+    // vertices are in world space
+    // transform to camera space
+    // transform to 2D image space
+    // draw the vertices on the image
+
+
+    
+
+    std::cout << "Done" << std::endl;
+    return;
+}
+
+
+
+
+GLFWwindow* setup_initial_rendering_window(int width, int height) {
     GLFWwindow* window;
+
+    /* Initialize the library */
+    if (!glfwInit())
+        return nullptr;
+
+    /* Create a windowed mode window and its OpenGL context */
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "Render", NULL, NULL);
-    if (!window) {
+    window = glfwCreateWindow(width, height, "Rendering Window", NULL, NULL);
+    if (!window)
+    {
         glfwTerminate();
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        return;
+        return nullptr;
     }
 
-    // Make the window's context current
+    /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-    // Initialize GLEW
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW" << std::endl;
-        return;
-    }
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearDepth(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glShadeModel(GL_SMOOTH);
 
-    // Set up the viewport
-    glViewport(0, 0, width, height);
+    glewInit();
 
-    // Set up the modelview matrix
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    // Clear the color buffer
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Set up the color
-    glColor3f(1.0f, 1.0f, 1.0f);
-
-    // Draw the mesh
-    glBegin(GL_TRIANGLES);
-
-    long nVertices = vertices.size() / 3;
-    for (int v = 0; v < nVertices; v++) {
-        double x = vertices[3 * v];
-        double y = vertices[3 * v + 1];
-        double z = vertices[3 * v + 2];
-
-        glVertex2d(x, y);
-        // set color to red
-        glColor3f(255, 0, 0);
-    }
-
-    glEnd();
-
-    // Read the pixels from the frame buffer
-    unsigned char* pixels = new unsigned char[3 * width * height];
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-    // Create an OpenCV image
-    cv::Mat image(height, width, CV_8UC3, pixels);
-
-    // Flip the image
-    cv::flip(image, image, 0);
-
-    // Save the image
-    cv::imwrite(outputFile, image);
-
-    // Terminate GLFW
-    glfwTerminate();
-
-    delete[] pixels;
-    
-    return;
+    return window;
 }
