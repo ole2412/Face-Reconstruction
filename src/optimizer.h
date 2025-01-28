@@ -16,8 +16,8 @@ public:
         int image_height);
 
     //TODO add the parameters
-    void optimizeDence();
-    void optimizeReg();
+    void optimizeDense();
+    void optimizeReg(OptimizationParameters& params);
 };
 
 

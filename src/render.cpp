@@ -125,7 +125,8 @@ void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition
         Eigen::Vector3d vertex(vertexPosition[3 * v], vertexPosition[3 * v + 1], vertexPosition[3 * v + 2]);
 
         // Apply rotation and translation
-        vertex = rotationMatrix * vertex + translation;
+        // + translation
+        vertex = rotationMatrix * vertex;
 
         vertexPosition[3 * v] = vertex[0];
         vertexPosition[3 * v + 1] = vertex[1];
@@ -167,7 +168,7 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     constexpr int IMAGE_WIDTH = 1440;  
     constexpr int IMAGE_HEIGHT = 960;
 
-    OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
+    OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), bfm->get_color_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
 
     // Get 3D coordinates of a landmarks vertex from the BFM model
     for (int index : landmarkIndices) {
@@ -199,8 +200,11 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     params.printParameters();
     Optimizer optimizer;
 
+    // Optimize reg term
+    optimizer.optimizeReg(params);
+
     // Optimize landmarks
-    optimizer.optimizeSparse(params, observed_landmarks, model_landmarks, params.image_width, params.image_height);
+    //optimizer.optimizeSparse(params, observed_landmarks, model_landmarks, params.image_width, params.image_height);
 
 
     // Print parameters after optimization
