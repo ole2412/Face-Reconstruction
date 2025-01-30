@@ -157,11 +157,15 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
     std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(observedLandmarksPath);;
 
-    //TODO define IMAGE_WIDTH and HEIGHT which is needed for calculating camera intrinsics
-    constexpr int IMAGE_WIDTH = 1440;  
-    constexpr int IMAGE_HEIGHT = 960;
+    // get width and height from img
+    int width = image.cols;
+    int height = image.rows;
 
-    OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), bfm->get_color_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
+    // log the values
+    std::cout << "Width: " << width << std::endl;
+    std::cout << "Height: " << height << std::endl;
+
+    OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), bfm->get_color_size(), width, height);
 
     // Get 3D coordinates of a landmarks vertex from the BFM model
     for (int index : landmarkIndices) {
