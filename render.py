@@ -26,11 +26,12 @@ def render_mesh(input_img_path, mesh_path, output_path):
 if __name__ == '__main__':
     
     # example usage:
-    # python3 render.py datasets/Ole1_with_landmarks.jpg output/Ole1.obj output/Ole1_rendered_landmarks.jpg
+    # python3 render.py Ole1
+    identifier = sys.argv[1]
 
-    input_img_path = sys.argv[1]
-    mesh_path = sys.argv[2]
-    output_path = sys.argv[3]
+    input_img_path = f'datasets/{identifier}_with_landmarks.jpg' 
+    mesh_path = f'output/{identifier}.obj'
+    output_path = f'output/{identifier}_rendered_landmarks.jpg'
 
     render_mesh(input_img_path=input_img_path, 
                     mesh_path=mesh_path, 
