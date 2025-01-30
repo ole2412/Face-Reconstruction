@@ -46,24 +46,25 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const E
         double z = vertexPosition[3 * v + 2];
 
         // red color for landmarks
-        if (std::find(landmarkIndices.begin(), landmarkIndices.end(), v) != landmarkIndices.end()) {
-            outFile << "v " << x << " " << y << " " << z << " 255 0 0" << std::endl;
-            continue;
+        if (show_landmarks && std::find(landmarkIndices.begin(), landmarkIndices.end(), v) != landmarkIndices.end()) {
+            outFile << "v " << x << " " << y << " " << z << " 255 0 0" << std::endl; // landmarks red, rest not stored
+        } else if(!show_landmarks) {
+            outFile << "v " << x << " " << y << " " << z << " 0 0 255" << std::endl; // all blue
         }
-
-        outFile << "v " << x << " " << y << " " << z << " 255 255 255" << std::endl;
     }
 
-    long nFaces = faceIndices.size() / 3;
-    std::cout << "nFaces: " << nFaces << std::endl;
-    for (int f = 0; f < nFaces; f++) {
-        int v1 = faceIndices[f + 0 * nFaces];
-        int v2 = faceIndices[f + 1 * nFaces];
-        int v3 = faceIndices[f + 2 * nFaces];
+    if (!show_landmarks) {
+        long nFaces = faceIndices.size() / 3;
+        std::cout << "nFaces: " << nFaces << std::endl;
+        for (int f = 0; f < nFaces; f++) {
+            int v1 = faceIndices[f + 0 * nFaces];
+            int v2 = faceIndices[f + 1 * nFaces];
+            int v3 = faceIndices[f + 2 * nFaces];
 
-        outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
+            outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
+        }
     }
-
+    
     outFile.close();
     std::cout << "Mesh successfully written to " << filename << std::endl;
 }
