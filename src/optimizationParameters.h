@@ -20,18 +20,24 @@ struct OptimizationParameters {
     // Model parameters
     Eigen::VectorXd shapeCoefficients;    // Shape PCA coefficients
     Eigen::VectorXd expressionCoefficients; // Expression PCA coefficients
+    Eigen::VectorXd colorCoefficients; // Expression PCA coefficients
+    int colorShapeSize;
+    int exprSize;
 
     // Landmark correspondences
     Eigen::VectorXd landmarkProjections; // Projected 2D coordinates of landmarks
 
-    OptimizationParameters(int shapeSize, int exprSize, int width, int height)
-        : fov(60.0),                          // Initialize FOV to a default value (60 degrees)
+    OptimizationParameters(int shapeSize, int exprSize, int colorSize, int width, int height)
+        : fov(60),                          // Initialize FOV to a default value (60 degrees)
           image_width(width),                 // Initialize image width
           image_height(height),               // Initialize image height
           translation(Eigen::Vector3d::Zero()),
           rotation(Eigen::Vector3d::Zero()),
           shapeCoefficients(Eigen::VectorXd::Zero(shapeSize)),
           expressionCoefficients(Eigen::VectorXd::Zero(exprSize)),
+          colorCoefficients(Eigen::VectorXd::Zero(colorSize)),
+          colorShapeSize(shapeSize),
+          exprSize(exprSize),
           landmarkProjections(Eigen::VectorXd::Zero(68 * 2)) // 68 landmarks, x and y coordinates
     {}
 
@@ -46,6 +52,7 @@ struct OptimizationParameters {
         rotation.setZero();
         shapeCoefficients.setZero();
         expressionCoefficients.setZero();
+        colorCoefficients.setZero();
         landmarkProjections.setZero();
     }
 
@@ -60,6 +67,7 @@ struct OptimizationParameters {
         std::cout << "Rotation: " << rotation.transpose() << std::endl;
         std::cout << "Shape Coefficients: " << shapeCoefficients.transpose() << std::endl;
         std::cout << "Expression Coefficients: " << expressionCoefficients.transpose() << std::endl;
+        std::cout << "Color Coefficients: " << colorCoefficients.transpose() << std::endl;
         std::cout << "Landmark Projections: " << landmarkProjections.transpose() << std::endl;
     }
 };
