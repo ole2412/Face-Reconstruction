@@ -4,6 +4,8 @@
 #include "optimizationParameters.h"
 #include <ceres/ceres.h>           
 #include <Eigen/Dense>  
+// include ceres rotation.h
+#include <ceres/rotation.h>
 
 namespace CostFunctions {
 

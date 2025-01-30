@@ -8,9 +8,6 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <ceres/ceres.h>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <opencv2/opencv.hpp>
 
 
 void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks = false) {
@@ -263,50 +260,9 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
 void outputMeshToImage(BFM* bfm, const Eigen::Matrix<double, -1, 1>& vertices, const Eigen::VectorXi& triangles, const OptimizationParameters& params,  cv::Mat image) {
 
-    auto window = setup_initial_rendering_window(image.cols, image.rows);
-
-    // approach:
-    // vertices are in world space
-    // transform to camera space
-    // transform to 2D image space
-    // draw the vertices on the image
-
+    // TBD
 
     
 
-    std::cout << "Done" << std::endl;
     return;
-}
-
-
-
-
-GLFWwindow* setup_initial_rendering_window(int width, int height) {
-    GLFWwindow* window;
-
-    /* Initialize the library */
-    if (!glfwInit())
-        return nullptr;
-
-    /* Create a windowed mode window and its OpenGL context */
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "Rendering Window", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        return nullptr;
-    }
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClearDepth(1.0f);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glShadeModel(GL_SMOOTH);
-
-    glewInit();
-
-    return window;
 }
