@@ -30,7 +30,6 @@ void BFM::load_bfm()
 
     try
     {
-        // TODO 1: load shape, expr and color pca, variance and mean to
         // the respective local variables (see bfm.h line 50 ff)
         // Initialize the HDF5 file
         H5::H5File file(m_model_path, H5F_ACC_RDONLY);
@@ -101,7 +100,6 @@ void BFM::load_bfm()
         color_var_dataset.read(color_var.data(), H5::PredType::NATIVE_DOUBLE);
         std::cout << "Color PCA variance loaded, size: " << color_var.size() << std::endl;
 
-        // TODO 2: load triangles to the triangles variable
         // Load Triangles Dataset
         H5::DataSet triangles_dataset = file.openDataSet("shape/representer/cells");
         H5::DataSpace triangles_space = triangles_dataset.getSpace();
@@ -117,16 +115,7 @@ void BFM::load_bfm()
         triangles.resize(triangles_dims[0] * triangles_dims[1]);
         triangles_dataset.read(triangles.data(), H5::PredType::NATIVE_INT);
 
-        // TODO 3: where are the 68 landmarks indices?
-        // load them to the landmark_indices variable
-
         landmark_indices = readLandmarks(m_landmark_path);
-
-        // std::cout << "Landmark indices: ";
-        // for (const int& index : landmark_indices) {
-        //     std::cout << index << " ";
-        // }
-
     }
     catch (H5::Exception &e)
     {

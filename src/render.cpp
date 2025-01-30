@@ -151,19 +151,11 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
      */
     std::vector<int> landmarkIndices = bfm->get_landmark_indices();
 
-    // TODO 2: write a parameters class where params are stored that we optimize for
-    // give that param object to this function
-
     // Initialize vector to store 3D landmark positions
     std::vector<Eigen::Vector3d> model_landmarks;
     model_landmarks.reserve(landmarkIndices.size());
 
-    // TODO fill the observed_landmarks
     std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(observedLandmarksPath);;
-
-    //for (int index = 0 ; index <  5; index++) {
-    //    std::cout << "model landmarks: " << model_landmarks[index] << std::endl;
-    //}
 
     //TODO define IMAGE_WIDTH and HEIGHT which is needed for calculating camera intrinsics
     constexpr int IMAGE_WIDTH = 1440;  
@@ -202,20 +194,15 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     Optimizer optimizer;
 
     // Optimize reg term
-    optimizer.optimizeReg(params);
+    // optimizer.optimizeReg(params);
 
     // Optimize landmarks
-    //optimizer.optimizeSparse(params, observed_landmarks, model_landmarks, params.image_width, params.image_height);
+    optimizer.optimizeSparse(params, observed_landmarks, model_landmarks, params.image_width, params.image_height);
 
 
     // Print parameters after optimization
     std::cout << "Parameters after Sparse Optimization" << std::endl;
     params.printParameters();
-
-
-    // TODO 3 (independet of previous tasks!): apply color from the model to the mesh 
-
-    // TODO 4 (independet of previous tasks!): write a seperate function to transform vertexPositions to 2D image coordinates
 
     Eigen::VectorXd shape_var = bfm->get_shape_var();
     Eigen::VectorXd expr_var = bfm->get_expr_var();
