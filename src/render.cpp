@@ -8,6 +8,9 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <ceres/ceres.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <opencv2/opencv.hpp>
 
 
 void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks = false) {
@@ -43,24 +46,25 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const E
         double z = vertexPosition[3 * v + 2];
 
         // red color for landmarks
-        if (std::find(landmarkIndices.begin(), landmarkIndices.end(), v) != landmarkIndices.end()) {
-            outFile << "v " << x << " " << y << " " << z << " 255 0 0" << std::endl;
-            continue;
+        if (show_landmarks && std::find(landmarkIndices.begin(), landmarkIndices.end(), v) != landmarkIndices.end()) {
+            outFile << "v " << x << " " << y << " " << z << " 255 0 0" << std::endl; // landmarks red, rest not stored
+        } else if(!show_landmarks) {
+            outFile << "v " << x << " " << y << " " << z << " 0 0 255" << std::endl; // all blue
         }
-
-        outFile << "v " << x << " " << y << " " << z << " 255 255 255" << std::endl;
     }
 
-    long nFaces = faceIndices.size() / 3;
-    std::cout << "nFaces: " << nFaces << std::endl;
-    for (int f = 0; f < nFaces; f++) {
-        int v1 = faceIndices[f + 0 * nFaces] + 1;
-        int v2 = faceIndices[f + 1 * nFaces] + 1;
-        int v3 = faceIndices[f + 2 * nFaces] + 1;
+    if (!show_landmarks) {
+        long nFaces = faceIndices.size() / 3;
+        std::cout << "nFaces: " << nFaces << std::endl;
+        for (int f = 0; f < nFaces; f++) {
+            int v1 = faceIndices[f + 0 * nFaces];
+            int v2 = faceIndices[f + 1 * nFaces];
+            int v3 = faceIndices[f + 2 * nFaces];
 
-        outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
+            outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
+        }
     }
-
+    
     outFile.close();
     std::cout << "Mesh successfully written to " << filename << std::endl;
 }
@@ -136,7 +140,7 @@ void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition
 
 
 
-void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::string& observedLandmarksPath) {
+void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::string& observedLandmarksPath, cv::Mat image) {
     /**
      * @brief Generates a 3D mesh using the Basel Face Model and writes it to an OBJ file.
      * 
@@ -254,5 +258,55 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
     outputMeshToObj(vertexPosition, triangles, outputFile, landmarkIndices, true);
 
+    outputMeshToImage(bfm, vertexPosition, triangles, params, image);
+}
 
+void outputMeshToImage(BFM* bfm, const Eigen::Matrix<double, -1, 1>& vertices, const Eigen::VectorXi& triangles, const OptimizationParameters& params,  cv::Mat image) {
+
+    auto window = setup_initial_rendering_window(image.cols, image.rows);
+
+    // approach:
+    // vertices are in world space
+    // transform to camera space
+    // transform to 2D image space
+    // draw the vertices on the image
+
+
+    
+
+    std::cout << "Done" << std::endl;
+    return;
+}
+
+
+
+
+GLFWwindow* setup_initial_rendering_window(int width, int height) {
+    GLFWwindow* window;
+
+    /* Initialize the library */
+    if (!glfwInit())
+        return nullptr;
+
+    /* Create a windowed mode window and its OpenGL context */
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    window = glfwCreateWindow(width, height, "Rendering Window", NULL, NULL);
+    if (!window)
+    {
+        glfwTerminate();
+        return nullptr;
+    }
+
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
+
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearDepth(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glShadeModel(GL_SMOOTH);
+
+    glewInit();
+
+    return window;
 }
