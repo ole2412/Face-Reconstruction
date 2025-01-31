@@ -25,22 +25,9 @@ struct SparseTermCostFunction {
 
     template <typename T>
     bool operator()(T const* translation, T const* rotation, T const* fov, T* residuals) const {
-
-        // T rotated_point[3];
-        // //ceres::AngleAxisRotatePoint(rotation, model_landmark.data(), rotated_point);
-
-        // T landmark_array[3] = {T(model_landmark[0]), T(model_landmark[1]), T(model_landmark[2])};
-        // ceres::AngleAxisRotatePoint(rotation, landmark_array, rotated_point);
-
-        // // Apply translation
-        // rotated_point[0] += translation[0];
-        // rotated_point[1] += translation[1];
-        // rotated_point[2] += translation[2];
-
         T rotation_matrix[9];
         T eulerAngles[3] = {rotation[0], rotation[1], rotation[2]};
         ceres::EulerAnglesToRotationMatrix(eulerAngles, 3, rotation_matrix);
-
 
         // Populate Eigen matrix for rotation
         Eigen::Matrix<T, 3, 3> rotationMatrix;
@@ -48,15 +35,12 @@ struct SparseTermCostFunction {
                         rotation_matrix[3], rotation_matrix[4], rotation_matrix[5],
                         rotation_matrix[6], rotation_matrix[7], rotation_matrix[8];
 
-
         // Convert model landmark to Eigen vector
         Eigen::Matrix<T, 3, 1> model_landmark_vec;
         model_landmark_vec << T(model_landmark[0]), T(model_landmark[1]), T(model_landmark[2]);
 
-
         // Rotate the model landmark
         Eigen::Matrix<T, 3, 1> rotated_point = rotationMatrix * model_landmark_vec;
-
 
         // Apply translation
         rotated_point[0] += translation[0];
