@@ -125,8 +125,7 @@ void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition
         Eigen::Vector3d vertex(vertexPosition[3 * v], vertexPosition[3 * v + 1], vertexPosition[3 * v + 2]);
 
         // Apply rotation and translation
-        // + translation
-        vertex = rotationMatrix * vertex;
+        vertex = rotationMatrix * vertex + translation;
 
         vertexPosition[3 * v] = vertex[0];
         vertexPosition[3 * v + 1] = vertex[1];
@@ -160,11 +159,7 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     int width = image.cols;
     int height = image.rows;
 
-    // log the values
-    std::cout << "Width: " << width << std::endl;
-    std::cout << "Height: " << height << std::endl;
-
-    OptimizationParameters params(bfm, bfm->get_shape_size(), bfm->get_expr_size(), bfm->get_color_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
+    OptimizationParameters params(bfm, bfm->get_shape_size(), bfm->get_expr_size(), bfm->get_color_size(), width, height);
 
     // Get 3D coordinates of a landmarks vertex from the BFM model
     for (int index : landmarkIndices) {
@@ -241,7 +236,7 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
 
 
     // Apply transformations (rotation and translation)
-    applyTransformationsToVertices(vertexPosition, params.rotation, params.translation);
+    applyTransformationsToVertices(vertexPosition, params.rotation, params.translation);    
 
 
     Eigen::VectorXi triangles = bfm->get_current_faces();
