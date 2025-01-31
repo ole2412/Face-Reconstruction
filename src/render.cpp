@@ -1,7 +1,6 @@
 #include "render.h"
 #include "costFunctions.h"
 #include "optimizationParameters.h"
-#include "bfm.h"
 #include "optimizer.h"
 
 #include <fstream>
@@ -165,7 +164,7 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     std::cout << "Width: " << width << std::endl;
     std::cout << "Height: " << height << std::endl;
 
-    OptimizationParameters params(bfm->get_shape_size(), bfm->get_expr_size(), bfm->get_color_size(), width, height);
+    OptimizationParameters params(bfm, bfm->get_shape_size(), bfm->get_expr_size(), bfm->get_color_size(), IMAGE_WIDTH, IMAGE_HEIGHT);
 
     // Get 3D coordinates of a landmarks vertex from the BFM model
     for (int index : landmarkIndices) {

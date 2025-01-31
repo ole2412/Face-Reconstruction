@@ -38,7 +38,7 @@ public:
     inline unsigned int get_no_faces() { return no_faces; }
     inline unsigned int get_landmarks_size() { return landmark_indices.size(); }
 
-private:
+public:
     std::string m_model_path = R"(../models/BFM17/model2017-1_face12_nomouth.h5)";
     std::string m_landmark_path = R"(../models/BFM17/Landmarks68_BFM.anl)";
     // H5::H5File h5_file;

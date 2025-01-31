@@ -16,7 +16,7 @@ void Optimizer::optimizeSparse(
 
     // Add residual blocks for each landmark
     //observed_landmarks.size()
-    for (size_t i = 0; i < 68; ++i) {
+    for (size_t i = 0; i < observed_landmarks.size(); ++i) {
         ceres::CostFunction* sparse_cost = CostFunctions::SparseTermCostFunction::Create(observed_landmarks[i], model_landmarks[i], params.image_width, params.image_height);
         problem.AddResidualBlock(
             sparse_cost,
@@ -27,7 +27,11 @@ void Optimizer::optimizeSparse(
         );
     }
 
-    // Set up options
+    //assume simplest setup, first check before optimiz where landmarks are in image frame, then start optimizing and print loss,
+    //see where landmark is of bfm and ground truth landmark, do only for landmark, just visualize it every step too. project the landmark on the image.
+    //meshlab show axis, so we load the mesh and it automatically adjusts to the axis. 
+    // Set up options. ahrdcode fx fy to 15mm from focal length and converrt to pixel. so scale the image in orthographic. 
+    // the mean is 0. standard deviation of model look up the mean. predefined.
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;
     options.use_nonmonotonic_steps = true;
@@ -54,14 +58,26 @@ void Optimizer::optimizeReg(
 
     ceres::Problem problem;
 
-    ceres::CostFunction* reg_cost = CostFunctions::RegularizationColorShapeCostFunction::Create(params.shapeCoefficients, params.colorCoefficients, params.colorShapeSize);
+    ceres::CostFunction* reg_shape_cost = CostFunctions::RegularizationShapeCostFunction::Create(params.shapeCoefficients, *params.bfm);
     problem.AddResidualBlock(
-        reg_cost,
+        reg_shape_cost,
         nullptr,                   
-        params.colorCoefficients.data(),
-        params.shapeCoefficients.data()  
+        params.shapeCoefficients.data()
     );
 
+    ceres::CostFunction* reg_color_cost = CostFunctions::RegularizationColorCostFunction::Create(params.colorCoefficients, *params.bfm);
+    problem.AddResidualBlock(
+        reg_color_cost,
+        nullptr,                   
+        params.colorCoefficients.data()
+    );
+
+    ceres::CostFunction* reg_expr_cost = CostFunctions::RegularizationExprCostFunction::Create(params.expressionCoefficients, *params.bfm);
+    problem.AddResidualBlock(
+        reg_expr_cost,
+        nullptr,                   
+        params.expressionCoefficients.data()
+    );
 
     // Set up options
     ceres::Solver::Options options;

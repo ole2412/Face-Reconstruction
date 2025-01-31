@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <ceres/ceres.h>
-
+#include "bfm.h"
 struct OptimizationParameters {
 
     // Camera intrinsics
@@ -26,9 +26,10 @@ struct OptimizationParameters {
 
     // Landmark correspondences
     Eigen::VectorXd landmarkProjections; // Projected 2D coordinates of landmarks
-
-    OptimizationParameters(int shapeSize, int exprSize, int colorSize, int width, int height)
-        : fov(60),                          // Initialize FOV to a default value (60 degrees)
+    BFM* bfm;
+    OptimizationParameters(BFM* bfm, int shapeSize, int exprSize, int colorSize, int width, int height)
+        : bfm(bfm),
+          fov(60),                          // Initialize FOV to a default value (60 degrees)
           image_width(width),                 // Initialize image width
           image_height(height),               // Initialize image height
           translation(Eigen::Vector3d::Zero()),
