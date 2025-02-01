@@ -20,11 +20,35 @@ namespace CostFunctions {
 
 
 struct SparseTermCostFunction {
-    SparseTermCostFunction(const Eigen::Vector2d& observed_landmark, const Eigen::Vector3d& model_landmark, int image_width, int image_height)
-        : observed_landmark(observed_landmark), model_landmark(model_landmark), image_width(image_width), image_height(image_height) {}
+    SparseTermCostFunction(const Eigen::Vector2d& observed_landmark, int landmark_index, BFM& bfm, int image_width, int image_height)
+        : observed_landmark(observed_landmark), landmark_index(landmark_index), bfm(bfm), image_width(image_width), image_height(image_height) {}
 
     template <typename T>
-    bool operator()(T const* translation, T const* rotation, T const* fov, T* residuals) const {
+    bool operator()(const T* translation, const T* rotation, const T* fov, const T* shape_coefficients, const T* expression_coefficients, T* residuals) const {
+    // Compute the 3D landmark position inside the cost function
+    //TODO it gets shape mean but maybe expr mean is also needed.
+        Eigen::Matrix<T, 3, 1> vertex;
+        vertex << T(bfm.get_shape_mean()(3 * landmark_index)),
+                  T(bfm.get_shape_mean()(3 * landmark_index + 1)),
+                  T(bfm.get_shape_mean()(3 * landmark_index + 2));
+
+        // Apply shape PCA
+        for (int i = 0; i < bfm.get_shape_size(); ++i) {
+            T shapeFactor = ceres::sqrt(T(bfm.get_shape_var()[i])) * shape_coefficients[i];
+            vertex[0] += shapeFactor * T(bfm.get_shape_pca()(3 * landmark_index, i));
+            vertex[1] += shapeFactor * T(bfm.get_shape_pca()(3 * landmark_index + 1, i));
+            vertex[2] += shapeFactor * T(bfm.get_shape_pca()(3 * landmark_index + 2, i));
+        }
+
+        // Apply expression PCA
+        for (int i = 0; i < bfm.get_expr_size(); ++i) {
+            T exprFactor = ceres::sqrt(T(bfm.get_expr_var()[i])) * expression_coefficients[i];
+            vertex[0] += exprFactor * T(bfm.get_expr_pca()(3 * landmark_index, i));
+            vertex[1] += exprFactor * T(bfm.get_expr_pca()(3 * landmark_index + 1, i));
+            vertex[2] += exprFactor * T(bfm.get_expr_pca()(3 * landmark_index + 2, i));
+        }
+
+
         T rotation_matrix[9];
         T eulerAngles[3] = {rotation[0], rotation[1], rotation[2]};
         ceres::EulerAnglesToRotationMatrix(eulerAngles, 3, rotation_matrix);
@@ -35,62 +59,37 @@ struct SparseTermCostFunction {
                         rotation_matrix[3], rotation_matrix[4], rotation_matrix[5],
                         rotation_matrix[6], rotation_matrix[7], rotation_matrix[8];
 
-        // Convert model landmark to Eigen vector
-        Eigen::Matrix<T, 3, 1> model_landmark_vec;
-        model_landmark_vec << T(model_landmark[0]), T(model_landmark[1]), T(model_landmark[2]);
 
         // Rotate the model landmark
-        Eigen::Matrix<T, 3, 1> rotated_point = rotationMatrix * model_landmark_vec;
+        Eigen::Matrix<T, 3, 1> rotated_point = rotationMatrix * vertex;
 
         // Apply translation
         rotated_point[0] += translation[0];
         rotated_point[1] += translation[1];
         rotated_point[2] += translation[2];
 
+        T aspect_ratio = T(image_width) / T(image_height);
+        T near_plane = T(0.1);
+        T far_plane = T(10000.0);
 
-        // Compute focal lengths fx and fy based on the image dimensions and field of view (fov)
-        // from https://flightmare.readthedocs.io/en/latest/first_steps/faq.html
-        //try ceres::tan((fov[0] * T(0.5));
-
-        //fov times pi durch 180
-        // tan of rad /2
-        //T fx = T(image_width) * T(0.5) / ceres::tan(((fov[0]) * T(M_PI)) / T(180.0) * T(0.5));
-        //T fy = T(image_height) * T(0.5) / ceres::tan(((fov[0]) * T(M_PI)) / T(180.0) * T(0.5));
-        
-        //T fx = (T(image_width) * T(0.5)) / ceres::tan((fov[0] * T(0.5)));
-        //T fy = (T(image_height) * T(0.5)) / ceres::tan((fov[0] * T(0.5)));
+        // Perspective projection matrix elements
+        T tan_half_fov = ceres::tan(fov[0]/ T(2));
+        T proj_00 = T(1) / (aspect_ratio * tan_half_fov);
+        T proj_11 = T(1) / tan_half_fov;
+        T proj_22 = -(far_plane + near_plane) / (far_plane - near_plane);
+        T proj_32 = -(T(2) * far_plane * near_plane) / (far_plane - near_plane);
 
 
-        // T X_temp = rotated_point[0] * fx + rotated_point[2] * T(image_width / 2);
-        // T Y_temp = rotated_point[1] * fy + rotated_point[2] * T(image_height / 2);
-        // // Perform perspective projection (Dehomogenization)
-        // T projected_x = (X_temp / rotated_point[2]);
-        // T projected_y = (Y_temp / rotated_point[2]);
+        T w = proj_22 * rotated_point[2] + proj_32;
+        T x_ndc = proj_00 * rotated_point[0] / w;
+        T y_ndc = proj_11 * rotated_point[1] / w;
 
-        // Perform perspective projection
+        // Convert to image space
+        T projected_x = (x_ndc + T(1)) * T(0.5) * T(image_width);
+        T projected_y = T(image_height) - ((y_ndc + T(1)) * T(0.5) * T(image_height));
 
-        // T projected_x = (rotated_point[0] * fx / rotated_point[2]) + T(image_width / 2.0);
-        // T projected_y = (rotated_point[1] * fy / rotated_point[2]) + T(image_height / 2.0);
-
-
-        // Project the 3D point to normalized image coordinates (camera space)
-        //T x_normalized = - rotated_point[0] / rotated_point[2];
-        //T y_normalized = - rotated_point[1] / rotated_point[2];
-
-        // Step 4: Convert normalized coordinates to pixel coordinates
-        //const T& focal = fov[0];
-
-        //T projected_x = (x_normalized * focal);
-        //T projected_y = (y_normalized * focal);
-        
-        //std::cout << "model landmark 2d: " << projected_x << ","<< projected_y << std::endl;
-
-        // Compute residuals (error) L2 norm, ceres handles the summation and squaring
-        //residuals[0] = projected_x - T(observed_landmark[0]);
-        //residuals[1] = projected_y - T(observed_landmark[1]);
-
-        residuals[0] = rotated_point[0] - T(observed_landmark[0]);
-        residuals[1] = rotated_point[1] - T(observed_landmark[1]);
+        residuals[0] = projected_x - T(observed_landmark[0]);
+        residuals[1] = projected_y - T(observed_landmark[1]);
 
         //std::cout << "residual x: " << residuals[0] << std::endl;
 
@@ -98,13 +97,15 @@ struct SparseTermCostFunction {
     }
 
 
-    static ceres::CostFunction* Create(const Eigen::Vector2d& observed_landmark, const Eigen::Vector3d& model_landmark, int image_width, int image_height) {
-        return new ceres::AutoDiffCostFunction<SparseTermCostFunction, 2, 3, 3, 1>( //2D error, 3D for translation, 3D rotation, 1D FOV
-            new SparseTermCostFunction(observed_landmark, model_landmark, image_width, image_height));
+    static ceres::CostFunction* Create(const Eigen::Vector2d& observed_landmark, int landmark_index, BFM& bfm, int image_width, int image_height) {
+        return new ceres::AutoDiffCostFunction<SparseTermCostFunction, 2, 3, 3, 1, 199, 100>( //2D error, 3D for translation, 3D rotation, 1D FOV
+            new SparseTermCostFunction(observed_landmark, landmark_index, bfm, image_width, image_height));
     }
 
+
     Eigen::Vector2d observed_landmark; // Observed 2D landmark from our source image
-    Eigen::Vector3d model_landmark;    // Corresponding 3D model landmark in the BFM model
+    int landmark_index;
+    BFM& bfm;
     int image_width;
     int image_height;
 };
@@ -189,8 +190,8 @@ struct RegularizationExprCostFunction {
 
 
     static ceres::CostFunction* Create(const Eigen::VectorXd& expr_coefficients, BFM& bfm) {
-        return new ceres::AutoDiffCostFunction<RegularizationColorCostFunction, 100, 100>( 
-            new RegularizationColorCostFunction(expr_coefficients, bfm));
+        return new ceres::AutoDiffCostFunction<RegularizationExprCostFunction, 100, 100>( 
+            new RegularizationExprCostFunction(expr_coefficients, bfm));
     }
 
     Eigen::VectorXd expr_coefficients;

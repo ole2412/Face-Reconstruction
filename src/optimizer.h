@@ -11,9 +11,16 @@ public:
     void optimizeSparse(
         OptimizationParameters& params,
         const std::vector<Eigen::Vector2d>& observed_landmarks,
-        const std::vector<Eigen::Vector3d>& model_landmarks,
+        const std::vector<int>& landmark_indices,
         int image_width,
         int image_height);
+    void optimizeSparseReg(
+        OptimizationParameters& params,
+        const std::vector<Eigen::Vector2d>& observed_landmarks,
+        const std::vector<int>& landmark_indices,
+        int image_width,
+        int image_height);
+
 
     //TODO add the parameters
     void optimizeDense();

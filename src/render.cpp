@@ -90,7 +90,9 @@ std::vector<Eigen::Vector2d> readObservedLandmarks(const std::string &filePath)
     return observed_landmarks;
 }
 
-void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::Vector3d& rotation, const Eigen::Vector3d& translation) {
+void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::Vector3d& rotation, 
+const Eigen::Vector3d& translation, int image_width, int image_height, double fov
+) {
     /**
      * @brief Applies rotation (using AngleAxis) and translation to vertex positions.
      * 
@@ -121,15 +123,34 @@ void applyTransformationsToVertices(Eigen::Matrix<double, -1, 1>& vertexPosition
                       rotation_matrix[3], rotation_matrix[4], rotation_matrix[5],
                       rotation_matrix[6], rotation_matrix[7], rotation_matrix[8];
 
+    // Perspective projection parameters
+    double aspect_ratio = static_cast<double>(image_width) / image_height;
+    double near_plane = 0.1, far_plane = 10000.0;
+    double tan_half_fov = std::tan(fov/2);
+    
+    double proj_00 = 1.0 / (aspect_ratio * tan_half_fov);
+    double proj_11 = 1.0 / tan_half_fov;
+    double proj_22 = -(far_plane + near_plane) / (far_plane - near_plane);
+    double proj_32 = -(2.0 * far_plane * near_plane) / (far_plane - near_plane);
+
     for (int v = 0; v < nVertices; ++v) {
         Eigen::Vector3d vertex(vertexPosition[3 * v], vertexPosition[3 * v + 1], vertexPosition[3 * v + 2]);
 
         // Apply rotation and translation
         vertex = rotationMatrix * vertex + translation;
 
-        vertexPosition[3 * v] = vertex[0];
-        vertexPosition[3 * v + 1] = vertex[1];
-        vertexPosition[3 * v + 2] = vertex[2];
+        // Apply perspective projection
+        double w = proj_22 * vertex[2] + proj_32;
+        double x_ndc = proj_00 * vertex[0] / w;
+        double y_ndc = proj_11 * vertex[1] / w;
+
+        // Convert to image space
+        double projected_x = (x_ndc + 1.0) * 0.5 * image_width;
+        double projected_y = image_height - ((y_ndc + 1.0) * 0.5 * image_height);
+
+        vertexPosition[3 * v] = projected_x;
+        vertexPosition[3 * v + 1] = projected_y;
+        vertexPosition[3 * v + 2] = vertex[2]; 
     }
 }
 
@@ -183,10 +204,6 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
         model_landmarks.push_back(vertex);
     }
 
-    //for (int index = 0 ; index <  5; index++) {
-    //    std::cout << "model landmarks: " << model_landmarks[index] << std::endl;
-    //}
-
     // Print initial parameters for debugging
     params.printParameters();
     Optimizer optimizer;
@@ -195,7 +212,9 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     // optimizer.optimizeReg(params);
 
     // Optimize landmarks
-    optimizer.optimizeSparse(params, observed_landmarks, model_landmarks, params.image_width, params.image_height);
+    optimizer.optimizeSparse(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height);
+
+    optimizer.optimizeSparseReg(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height);
 
 
     // Print parameters after optimization
@@ -233,11 +252,10 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
         }
     }
 
-
-
     // Apply transformations (rotation and translation)
-    applyTransformationsToVertices(vertexPosition, params.rotation, params.translation);    
-
+    applyTransformationsToVertices(vertexPosition, params.rotation, params.translation, 
+                               width, height, 
+                               params.fov);
 
     Eigen::VectorXi triangles = bfm->get_current_faces();
 

@@ -29,7 +29,7 @@ struct OptimizationParameters {
     BFM* bfm;
     OptimizationParameters(BFM* bfm, int shapeSize, int exprSize, int colorSize, int width, int height)
         : bfm(bfm),
-          fov(60),                          // Initialize FOV to a default value (60 degrees)
+          fov(60),                          // Initialize FOV to a default value 
           image_width(width),                 // Initialize image width
           image_height(height),               // Initialize image height
           translation(Eigen::Vector3d::Zero()),
