@@ -64,6 +64,7 @@ public:
     std::vector<int> landmark_indices;
 
     void load_bfm();
+    void get_vertex_positions(Eigen::Matrix<double, -1, 1> &vertexPosition, Eigen::VectorXd &shapeCoefficients, Eigen::VectorXd &expressionCoefficients);
 };
 
 #endif

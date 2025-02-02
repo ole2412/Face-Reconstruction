@@ -8,12 +8,21 @@
 
 class Optimizer {
 public:
+    void optimize(
+        OptimizationParameters& params,
+        const std::vector<Eigen::Vector2d>& observed_landmarks,
+        const std::vector<int>& landmark_indices,
+        int image_width,
+        int image_height
+    );
+
     void optimizeSparse(
         OptimizationParameters& params,
         const std::vector<Eigen::Vector2d>& observed_landmarks,
         const std::vector<int>& landmark_indices,
         int image_width,
         int image_height);
+        
     void optimizeSparseReg(
         OptimizationParameters& params,
         const std::vector<Eigen::Vector2d>& observed_landmarks,
