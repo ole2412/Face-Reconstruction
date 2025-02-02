@@ -17,7 +17,7 @@ def render_mesh(input_img_path, mesh_path, output_path):
     
     # write x y coordinates on top of the input_img in the given color, note that the given color is 4D
     for i in range(len(x)):
-        img = cv2.circle(img, (int(x[i]), int(y[i])), 1, (int(color[i][0]*255), int(color[i][1]*255), int(color[i][2]*255)), -1)
+        img = cv2.circle(img, (int(x[i]), int(y[i])), 5, (int(color[i][0]), int(color[i][1]), int(color[i][2])), -1)
     
     # store the img to output_path
     cv2.imwrite(output_path, img)
@@ -38,4 +38,10 @@ if __name__ == '__main__':
                     mesh_path=mesh_path, 
                     output_path=output_path
                     ) 
-
+    
+    all_vertices_path = f'output/{identifier}_all_vertices.obj'
+    if all_vertices_path:
+        render_mesh(input_img_path=input_img_path, 
+                    mesh_path=all_vertices_path, 
+                    output_path=f'output/{identifier}_all_vertices.jpg'
+                    )
