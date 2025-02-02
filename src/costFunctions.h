@@ -14,11 +14,16 @@ namespace CostFunctions {
  * @brief Cost function for the sparse term (E_sparse).
  * 
  * Penalizes differences between projected 3D model landmarks and corresponding 2D image landmarks.
+ * The cost function is defined as:
+ * E_sparse = ||P(R * (S * v + t)) - u||^2
+ * where:
+ * - P is the perspective projection matrix
+ * - R is the rotation matrix
+ * - S is the shape PCA matrix
+ * - v is the 3D landmark position
+ * - t is the translation vector
+ * - u is the observed 2D landmark
  */
-
-
-
-
 struct SparseTermCostFunction {
     SparseTermCostFunction(const Eigen::Vector2d& observed_landmark, int landmark_index, BFM& bfm, int image_width, int image_height)
         : observed_landmark(observed_landmark), landmark_index(landmark_index), bfm(bfm), image_width(image_width), image_height(image_height) {}
@@ -119,9 +124,14 @@ struct DenseTermCostFunction {
     // TODO: Add implementation
 };
 
+
+
 /**
- * @brief Placeholder for regularization term (E_reg) cost function.
+ * @brief Cost function for the regularization term of the shape coefficients.
  * 
+ * Penalizes deviations from the mean shape.
+ * The cost function is defined as:
+ * E_shape = sum_i (shape_coefficients[i] / shape_std[i])
  */
 struct RegularizationShapeCostFunction {
     RegularizationShapeCostFunction(const Eigen::VectorXd& shape_coefficients, BFM& bfm)
@@ -148,6 +158,13 @@ struct RegularizationShapeCostFunction {
     BFM bfm;
 };
 
+/**
+ * @brief Cost function for the regularization term of the color coefficients.
+ * 
+ * Penalizes deviations from the mean color.
+ * The cost function is defined as:
+ * E_color = sum_i (color_coefficients[i] / color_std[i])
+ */
 struct RegularizationColorCostFunction {
     RegularizationColorCostFunction(const Eigen::VectorXd& color_coefficients, BFM& bfm)
         : color_coefficients(color_coefficients), bfm(bfm) {}
@@ -173,6 +190,14 @@ struct RegularizationColorCostFunction {
     BFM bfm;
 };
 
+
+/**
+ * @brief Cost function for the regularization term of the expression coefficients.
+ * 
+ * Penalizes deviations from the mean expression.
+ * The cost function is defined as:
+ * E_expr = sum_i (expr_coefficients[i] / expr_std[i])
+ */
 struct RegularizationExprCostFunction {
     RegularizationExprCostFunction(const Eigen::VectorXd& expr_coefficients, BFM& bfm)
         : expr_coefficients(expr_coefficients), bfm(bfm) {}
