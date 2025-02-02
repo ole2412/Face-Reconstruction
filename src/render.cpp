@@ -208,8 +208,6 @@ void generateAndOutputMesh(BFM* bfm, const std::string& outputFile, const std::s
     params.printParameters();
     Optimizer optimizer;
 
-    // Optimize reg term
-    // optimizer.optimizeReg(params);
 
     // Optimize landmarks
     optimizer.optimizeSparse(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height);

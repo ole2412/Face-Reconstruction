@@ -24,7 +24,7 @@ public:
 
     //TODO add the parameters
     void optimizeDense();
-    void optimizeReg(OptimizationParameters& params);
+    // void optimizeReg(OptimizationParameters& params);
 };
 
 
