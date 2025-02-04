@@ -4,13 +4,13 @@
 #include <Eigen/Dense>
 #include <hdf5.h>
 #include <H5Cpp.h>
-
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <map>
 #include <memory>
-
+class OptimizationParameters;
 class BFM
 {
 public:
@@ -24,19 +24,23 @@ public:
     inline Eigen::VectorXd &get_expr_var() { return expr_var; }
     inline Eigen::VectorXd &get_expr_mean() { return expr_mean; }
 
-    inline Eigen::MatrixXd &get_color_pca() { return color_pca; }
-    inline Eigen::VectorXd &get_color_var() { return color_var; }
-    inline Eigen::VectorXd &get_color_mean() { return color_mean; }
+    inline const Eigen::MatrixXd &get_color_pca() const { return color_pca; }
+    inline const Eigen::VectorXd &get_color_var() const { return color_var; }
+    inline const Eigen::VectorXd &get_color_mean() const { return color_mean; }
 
     inline Eigen::VectorXi &get_current_faces() { return triangles; }
     inline std::vector<int> &get_landmark_indices() { return landmark_indices; }
 
-    inline unsigned int get_no_vertices() { return no_vertices; }
+    inline unsigned int get_no_vertices() const { return no_vertices; }
     inline unsigned int get_expr_size() { return expr_size; }
-    inline unsigned int get_color_size() { return color_shape_size; }
+    inline unsigned int get_color_size() const { return color_shape_size; }
     inline unsigned int get_shape_size() { return color_shape_size; }
     inline unsigned int get_no_faces() { return no_faces; }
     inline unsigned int get_landmarks_size() { return landmark_indices.size(); }
+    Eigen::MatrixXd extractVertexColors(const OptimizationParameters &params) const;
+    Eigen::MatrixXd get_observed_colors(const cv::Mat &image) const;
+    Eigen::Vector3d get_vertex(int index) const;
+    std::pair<int, int> projectVertexToImage(const Eigen::Vector3d &vertex) const;
 
 public:
     std::string m_model_path = R"(../models/BFM17/model2017-1_face12_nomouth.h5)";

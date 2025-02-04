@@ -11,12 +11,13 @@
 #include "src/optimizationParameters.h"
 #include "src/optimizer.h"
 
-
-int main(int argc, char* argv[]) {
-    // idea: later have two modes: 
+int main(int argc, char *argv[])
+{
+    // idea: later have two modes:
     // 1. "main <image_name>" -> self reeanactment
     // 2. "main <image_name1> <image_name2>" -> expression params from 1 and put on 2
-    if (argc < 2) {
+    if (argc < 2)
+    {
         std::cout << "Usage: main <image_name>" << std::endl;
         return -1;
     }
@@ -34,28 +35,27 @@ int main(int argc, char* argv[]) {
     std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(landmark_path);
     OptimizationParameters params(&bfm, bfm.get_shape_size(), bfm.get_expr_size(), bfm.get_color_size(), image.cols, image.rows);
     Optimizer optimizer;
-    optimizer.optimize(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height);
+    Eigen::MatrixXd model_colors = bfm.extractVertexColors(params);
+    Eigen::MatrixXd observed_colors = bfm.get_observed_colors(image);
+    optimizer.optimize(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height, observed_colors, model_colors, image);
 
     // get 3D vertex positions
     Eigen::Matrix<double, -1, 1> vertexPosition;
     bfm.get_vertex_positions(vertexPosition, params.shapeCoefficients, params.expressionCoefficients);
-    
+
     // store to mesh
-    applyTransformationsAndProjectionToVertices(vertexPosition, params.rotation, params.translation, 
-                               params.image_width, params.image_height, 
-                               params.fov);
+    // applyTransformationsAndProjectionToVertices(vertexPosition, params.rotation, params.translation,
+    //                                             params.image_width, params.image_height,
+    //                                             params.fov);
     Eigen::VectorXi triangles = bfm.get_current_faces();
 
-
     // TODO: replace this with cpp version of rendering
-    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + "_all_vertices.obj", landmarkIndices, false);
-    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, true);
-
-
+    // outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + "_all_vertices.obj", landmarkIndices, false);
+    // outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, true);
+    outputMeshToPly(triangles, "../output/" + image_name + ".ply", landmarkIndices, image, params, true);
     // store and show the output image
     // cv::imwrite(output_path, image);
     // cv::waitKey(0);
 
     return 0;
 }
-

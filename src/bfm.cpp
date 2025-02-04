@@ -1,5 +1,5 @@
 #include "bfm.h"
-
+#include "optimizationParameters.h"
 BFM::BFM()
 {
     load_bfm();
@@ -112,18 +112,22 @@ void BFM::load_bfm()
     std::cout << "BFM model loading complete." << std::endl;
 }
 
-void BFM::get_vertex_positions(Eigen::Matrix<double, -1, 1> &vertexPosition, Eigen::VectorXd &shapeCoefficients, Eigen::VectorXd &expressionCoefficients){
+void BFM::get_vertex_positions(Eigen::Matrix<double, -1, 1> &vertexPosition, Eigen::VectorXd &shapeCoefficients, Eigen::VectorXd &expressionCoefficients)
+{
     vertexPosition = shape_mean + expr_mean;
 
-    for (int v = 0; v < no_vertices; v++) {
-        for (int i = 0; i < color_shape_size; i++) {
+    for (int v = 0; v < no_vertices; v++)
+    {
+        for (int i = 0; i < color_shape_size; i++)
+        {
             double shapeFactor = sqrt(shape_var[i]) * shapeCoefficients[i];
             vertexPosition[3 * v] += shapeFactor * shape_pca(3 * v, i);
             vertexPosition[3 * v + 1] += shapeFactor * shape_pca(3 * v + 1, i);
             vertexPosition[3 * v + 2] += shapeFactor * shape_pca(3 * v + 2, i);
         }
 
-        for (int i = 0; i < expr_size; i++) {
+        for (int i = 0; i < expr_size; i++)
+        {
             double exprFactor = sqrt(expr_var[i]) * expressionCoefficients[i];
             vertexPosition[3 * v] += exprFactor * expr_pca(3 * v, i);
             vertexPosition[3 * v + 1] += exprFactor * expr_pca(3 * v + 1, i);
@@ -131,3 +135,129 @@ void BFM::get_vertex_positions(Eigen::Matrix<double, -1, 1> &vertexPosition, Eig
         }
     }
 }
+
+Eigen::MatrixXd BFM::extractVertexColors(const OptimizationParameters &params) const
+{
+    Eigen::MatrixXd vertexColors(this->get_no_vertices(), 3);
+
+    for (int index = 0; index < this->get_no_vertices(); ++index)
+    {
+        Eigen::Vector3d color = this->get_color_mean().segment<3>(3 * index);
+
+        for (int i = 0; i < this->get_color_size(); ++i)
+        {
+            double colorFactor = sqrt(this->get_color_var()[i]) * params.colorCoefficients[i];
+            color[0] += colorFactor * this->get_color_pca()(3 * index, i);
+            color[1] += colorFactor * this->get_color_pca()(3 * index + 1, i);
+            color[2] += colorFactor * this->get_color_pca()(3 * index + 2, i);
+        }
+
+        vertexColors.row(index) = color;
+    }
+
+    return vertexColors;
+}
+
+Eigen::MatrixXd BFM::get_observed_colors(const cv::Mat &image) const
+{
+    // 顶点数量
+    long nVertices = this->get_no_vertices();
+    Eigen::MatrixXd colors(nVertices, 3); // 每行存储 RGB 值
+
+    for (int v = 0; v < nVertices; ++v)
+    {
+        // 获取当前顶点的 3D 坐标
+        Eigen::Vector3d vertex = this->get_vertex(v);
+
+        // 投影到 2D 图像坐标
+        auto [u, v_proj] = projectVertexToImage(vertex);
+
+        // 检查投影是否在图像范围内
+        if (u >= 0 && u < image.cols && v_proj >= 0 && v_proj < image.rows)
+        {
+            // 从图像中获取像素颜色
+            cv::Vec3b color = image.at<cv::Vec3b>(v_proj, u);
+
+            // 归一化颜色值并存储到矩阵中
+            colors(v, 0) = color[2] / 255.0; // Red
+            colors(v, 1) = color[1] / 255.0; // Green
+            colors(v, 2) = color[0] / 255.0; // Blue
+        }
+        else
+        {
+            // 如果投影超出范围，设置默认颜色为黑色
+            colors(v, 0) = 0.0; // Red
+            colors(v, 1) = 0.0; // Green
+            colors(v, 2) = 0.0; // Blue
+        }
+    }
+
+    return colors; // 返回颜色矩阵
+}
+
+Eigen::Vector3d BFM::get_vertex(int index) const
+{
+    // 确保索引合法
+    if (index < 0 || index >= this->get_no_vertices())
+    {
+        throw std::out_of_range("Index out of range in get_vertex");
+    }
+
+    // 从 shape_mean 和 expr_mean 中计算 3D 顶点
+    return Eigen::Vector3d(
+        shape_mean(3 * index) + expr_mean(3 * index),
+        shape_mean(3 * index + 1) + expr_mean(3 * index + 1),
+        shape_mean(3 * index + 2) + expr_mean(3 * index + 2));
+}
+
+std::pair<int, int> BFM::projectVertexToImage(const Eigen::Vector3d &vertex) const
+{
+    // 假设相机内参（焦距 fx 和 fy，光心 cx 和 cy）
+    double fx = 500.0; // 焦距 fx
+    double fy = 500.0; // 焦距 fy
+    double cx = 960.0; // 图像中心 x
+    double cy = 540.0; // 图像中心 y
+
+    // 使用 3D 点到 2D 点的投影公式
+    int u = static_cast<int>(fx * vertex[0] / vertex[2] + cx);
+    int v_proj = static_cast<int>(fy * vertex[1] / vertex[2] + cy);
+
+    return {u, v_proj}; // 返回投影后的 2D 坐标
+}
+
+// Eigen::MatrixXd BFM::get_observed_colors(const cv::Mat &image) const
+// {
+//     // 顶点数量
+//     long nVertices = this->get_no_vertices();
+//     Eigen::MatrixXd colors(nVertices, 3); // 每行存储 RGB 值
+
+//     for (int v = 0; v < nVertices; ++v)
+//     {
+//         // 获取当前顶点的 3D 坐标
+//         Eigen::Vector3d vertex = this->get_vertex(v);
+
+//         // 投影到 2D 图像坐标
+//         auto [u, v_proj] = projectVertexToImage(vertex);
+
+//         // 检查投影是否在图像范围内
+//         if (u >= 0 && u < image.cols && v_proj >= 0 && v_proj < image.rows)
+//         {
+//             // 从图像中获取像素颜色
+//             cv::Vec3b color = image.at<cv::Vec3b>(v_proj, u);
+
+//             // 归一化颜色值并存储到矩阵中
+//             colors(v, 0) = color[2] / 255.0; // Red
+//             colors(v, 1) = color[1] / 255.0; // Green
+//             colors(v, 2) = color[0] / 255.0; // Blue
+//         }
+//         else
+//         {
+//             // 如果投影超出范围，设置默认颜色为黑色
+//             colors(v, 0) = 0.0; // Red
+//             colors(v, 1) = 0.0; // Green
+//             colors(v, 2) = 0.0; // Blue
+//         }
+//     }
+
+//     return colors; // 返回颜色矩阵
+// }
