@@ -65,9 +65,9 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
 
     for (int f = 0; f < nFaces; ++f)
     {
-        int v1 = triangles[f + 0 * nFaces] + 1;
-        int v2 = triangles[f + 1 * nFaces] + 1;
-        int v3 = triangles[f + 2 * nFaces] + 1;
+        int v1 = triangles[f + 0 * nFaces]; // NOTE on .obj we need + 1 here, dont know whether we need it here as well
+        int v2 = triangles[f + 1 * nFaces];
+        int v3 = triangles[f + 2 * nFaces];
 
         outFile << "3 " << v1 << " " << v2 << " " << v3 << "\n";
     }
