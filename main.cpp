@@ -34,10 +34,10 @@ int main(int argc, char *argv[])
     std::vector<int> landmarkIndices = bfm.get_landmark_indices();
     std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(landmark_path);
     OptimizationParameters params(&bfm, bfm.get_shape_size(), bfm.get_expr_size(), bfm.get_color_size(), image.cols, image.rows);
-    Optimizer optimizer;
-    Eigen::MatrixXd model_colors = bfm.extractVertexColors(params);
-    Eigen::MatrixXd observed_colors = bfm.get_observed_colors(image);
-    optimizer.optimize(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height, observed_colors, model_colors, image);
+    // Optimizer optimizer;
+    // Eigen::MatrixXd model_colors = bfm.extractVertexColors(params);
+    // Eigen::MatrixXd observed_colors = bfm.get_observed_colors(image);
+    // optimizer.optimize(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height, observed_colors, model_colors, image);
 
     // get 3D vertex positions
     Eigen::Matrix<double, -1, 1> vertexPosition;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
     // TODO: replace this with cpp version of rendering
     // outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + "_all_vertices.obj", landmarkIndices, false);
-    // outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, true);
+    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, false);
     outputMeshToPly(triangles, "../output/" + image_name + ".ply", landmarkIndices, image, params, true);
     // store and show the output image
     // cv::imwrite(output_path, image);
