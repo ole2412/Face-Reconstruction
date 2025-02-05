@@ -65,9 +65,9 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
 
     for (int f = 0; f < nFaces; ++f)
     {
-        int v1 = triangles[f + 0 * nFaces];
-        int v2 = triangles[f + 1 * nFaces];
-        int v3 = triangles[f + 2 * nFaces];
+        int v1 = triangles[f + 0 * nFaces] + 1;
+        int v2 = triangles[f + 1 * nFaces] + 1;
+        int v3 = triangles[f + 2 * nFaces] + 1;
 
         outFile << "3 " << v1 << " " << v2 << " " << v3 << "\n";
     }
@@ -126,9 +126,9 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const E
         long nFaces = faceIndices.size() / 3;
         for (int f = 0; f < nFaces; f++)
         {
-            int v1 = faceIndices[f + 0 * nFaces];
-            int v2 = faceIndices[f + 1 * nFaces];
-            int v3 = faceIndices[f + 2 * nFaces];
+            int v1 = faceIndices[f + 0 * nFaces] + 1;
+            int v2 = faceIndices[f + 1 * nFaces] + 1;
+            int v3 = faceIndices[f + 2 * nFaces] + 1;
 
             outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
         }
