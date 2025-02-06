@@ -17,6 +17,8 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
     Eigen::MatrixXd vertexColors = bfm.extractVertexColors(params);
     Eigen::Matrix<double, -1, 1> vertexPosition = shape_mean + expr_mean;
 
+    bfm.get_vertex_positions(vertexPosition, params.shapeCoefficients, params.expressionCoefficients);
+
     if (vertexColors.rows() != bfm.get_no_vertices())
     {
         std::cerr << "Error: Vertex color count does not match vertex count." << std::endl;
@@ -76,7 +78,7 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
     std::cout << "PLY file successfully written to " << filename << std::endl;
 }
 
-void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const Eigen::VectorXi &faceIndices, const std::string &filename, std::vector<int> &landmarkIndices, bool show_landmarks)
+void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const Eigen::VectorXi &faceIndices, const std::string &filename, std::vector<int> &landmarkIndices, OptimizationParameters &params, bool show_landmarks)
 {
     /**
      * @brief Outputs a 3D mesh to an OBJ file.
@@ -103,6 +105,8 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const E
         return;
     }
 
+    BFM bfm = BFM();
+    Eigen::MatrixXd vertexColors = bfm.extractVertexColors(params);
     long nVertices = vertexPosition.size() / 3;
     for (int v = 0; v < nVertices; v++)
     {
@@ -117,7 +121,7 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const E
         }
         else if (!show_landmarks)
         {
-            outFile << "v " << x << " " << y << " " << z << " 0 0 255" << std::endl; // all blue
+            outFile << "v " << x << " " << y << " " << z << " " << vertexColors(v, 0) * 255.0 << " " << vertexColors(v, 1) * 255.0 << " " << vertexColors(v, 2) * 255.0 << std::endl;
         }
     }
 

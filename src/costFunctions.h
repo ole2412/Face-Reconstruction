@@ -36,9 +36,9 @@ namespace CostFunctions
             // Compute the 3D landmark position inside the cost function
             // TODO it gets shape mean but maybe expr mean is also needed.
             Eigen::Matrix<T, 3, 1> vertex;
-            vertex << T(bfm.get_shape_mean()(3 * landmark_index)),
-                T(bfm.get_shape_mean()(3 * landmark_index + 1)),
-                T(bfm.get_shape_mean()(3 * landmark_index + 2));
+            vertex << T(bfm.get_shape_mean()(3 * landmark_index) + T(bfm.get_expr_mean()(3 * landmark_index))),
+                T(bfm.get_shape_mean()(3 * landmark_index + 1)) + T(bfm.get_expr_mean()(3 * landmark_index + 1)),
+                T(bfm.get_shape_mean()(3 * landmark_index + 2)) + T(bfm.get_expr_mean()(3 * landmark_index + 2));
 
             // Apply shape PCA
             for (int i = 0; i < bfm.get_shape_size(); ++i)

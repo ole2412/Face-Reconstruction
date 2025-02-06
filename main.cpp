@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
     // TODO: replace this with cpp version of rendering
     // outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + "_all_vertices.obj", landmarkIndices, false);
-    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, false);
+    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, params, false);
     outputMeshToPly(triangles, "../output/" + image_name + ".ply", landmarkIndices, image, params, true);
     // store and show the output image
     // cv::imwrite(output_path, image);
