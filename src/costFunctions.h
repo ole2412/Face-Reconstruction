@@ -128,27 +128,43 @@ namespace CostFunctions
 
     struct ColorCostFunction
     {
-        ColorCostFunction(const Eigen::Vector3d &observed_color, const Eigen::Vector3d &model_color)
-            : observed_color(observed_color), model_color(model_color) {}
+        ColorCostFunction(const Eigen::Vector3d &observed_color,
+                          const Eigen::Vector3d &model_color,
+                          const Eigen::Vector3d &color_mean,
+                          const Eigen::Matrix<double, 3, 199> &color_basis)
+            : observed_color(observed_color), model_color(model_color),
+              color_mean(color_mean), color_basis(color_basis) {}
 
         template <typename T>
         bool operator()(const T *const color_coefficients, T *residuals) const
         {
-            for (int i = 0; i < 3; ++i)
-            {
-                residuals[i] = T(model_color[i]) - T(observed_color[i]) * color_coefficients[i];
-            }
+            // 将待优化的 199 维 albedo 参数封装成 Eigen 向量
+            Eigen::Map<const Eigen::Matrix<T, 199, 1>> coeff(color_coefficients);
+
+            // 根据当前 albedo 参数计算预测的颜色：color_mean + color_basis * coeff
+            Eigen::Matrix<T, 3, 1> predicted_color = color_mean.cast<T>() + color_basis.cast<T>() * coeff;
+
+            // 目标颜色应为图像中采样到的颜色 observed_color，
+            // 而不是 BFM 计算得到的 model_color
+            Eigen::Map<Eigen::Matrix<T, 3, 1>> residual_map(residuals);
+            residual_map = observed_color.cast<T>() - predicted_color; // 或者相反，根据你的损失定义
+
             return true;
         }
 
-        static ceres::CostFunction *Create(const Eigen::Vector3d &observed_color, const Eigen::Vector3d &model_color)
+        static ceres::CostFunction *Create(const Eigen::Vector3d &observed_color,
+                                           const Eigen::Vector3d &model_color,
+                                           const Eigen::Vector3d &color_mean,
+                                           const Eigen::Matrix<double, 3, 199> &color_basis)
         {
-            return new ceres::AutoDiffCostFunction<ColorCostFunction, 3, 3>(
-                new ColorCostFunction(observed_color, model_color));
+            return new ceres::AutoDiffCostFunction<ColorCostFunction, 3, 199>(
+                new ColorCostFunction(observed_color, model_color, color_mean, color_basis));
         }
 
         Eigen::Vector3d observed_color;
         Eigen::Vector3d model_color;
+        Eigen::Vector3d color_mean;
+        Eigen::Matrix<double, 3, 199> color_basis;
     };
 
     /**
