@@ -40,10 +40,9 @@ int main(int argc, char *argv[])
     Eigen::MatrixXd observed_colors = bfm.get_observed_colors(image);
     optimizer.optimize(params, observed_landmarks, landmarkIndices, params.image_width, params.image_height, observed_colors, model_colors, image);
 
-    //params.shapeCoefficients.setZero();
-    //params.expressionCoefficients.setZero();
-    //params.shapeCoefficients(1) = -4;  // Adjust the value as needed
-    //params.expressionCoefficients(0) = 1;  // Adjust the value as needed
+    // params.shapeCoefficients.setZero();
+    // params.expressionCoefficients.setZero();
+    // params.shapeCoefficients(1) = -4;  // Adjust the value as needed
 
 /*     std::random_device rd;
     std::mt19937 gen(rd());
@@ -62,13 +61,13 @@ int main(int argc, char *argv[])
     bfm.get_vertex_positions(vertexPosition, params.shapeCoefficients, params.expressionCoefficients);
     params.printParameters();
     // store to mesh
-    applyTransformationsAndProjectionToVertices(vertexPosition, params.rotation, params.translation,params.image_width, params.image_height,params.fov);
+    // applyTransformationsAndProjectionToVertices(vertexPosition, params.rotation, params.translation,params.image_width, params.image_height,params.fov);
     Eigen::VectorXi triangles = bfm.get_current_faces();
 
     // TODO: replace this with cpp version of rendering
     // outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + "_all_vertices.obj", landmarkIndices, false);
-    //outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, params, false);
-    bfm_create_obj(bfm, params);
+    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, params, false);
+    // bfm_create_obj(bfm, params);
     outputMeshToPly(triangles, "../output/" + image_name + ".ply", landmarkIndices, image, params, true);
     // store and show the output image
     // cv::imwrite(output_path, image);

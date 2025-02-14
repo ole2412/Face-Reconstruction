@@ -51,7 +51,8 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
     outFile << "property list uchar int vertex_index\n";
     outFile << "end_header\n";
 
-    for (int v = 0; v < nVertices; ++v)
+    // log number of vertices
+    for (int v = 0; v < nVertices; v++)
     {
         double x = vertexPosition[3 * v];
         double y = vertexPosition[3 * v + 1];
@@ -67,7 +68,7 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
 
     for (int f = 0; f < nFaces; ++f)
     {
-        int v1 = triangles[f + 0 * nFaces]; // NOTE on .obj we need + 1 here, dont know whether we need it here as well
+        int v1 = triangles[f + 0 * nFaces];
         int v2 = triangles[f + 1 * nFaces];
         int v3 = triangles[f + 2 * nFaces];
 
@@ -79,7 +80,8 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
 }
 
 void bfm_create_obj(BFM bfm, OptimizationParameters params) {
-    std::ofstream obj_file("export.obj");
+    // TODO: remove this function later
+    std::ofstream obj_file("../output/export.obj");
 
     Eigen::VectorXd shape_mean = bfm.get_shape_mean();
     Eigen::VectorXd expr_mean = bfm.get_expr_mean();
@@ -89,11 +91,10 @@ void bfm_create_obj(BFM bfm, OptimizationParameters params) {
 
     Eigen::MatrixXd shape_pca_var = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.shape_var.data(), 199, 1);
     Eigen::MatrixXd shape_pca_basis = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.shape_pca.data(), 85764, 199);
-    
+    Eigen::MatrixXd shape_result = shape_pca_basis * (shape_pca_var.cwiseSqrt().cwiseProduct(params.shapeCoefficients));
+
     Eigen::MatrixXd exp_pca_var = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.expr_var.data(), 100, 1);
     Eigen::MatrixXd exp_pca_basis = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.expr_pca.data(), 85764, 100);
-
-    Eigen::MatrixXd shape_result = shape_pca_basis * (shape_pca_var.cwiseSqrt().cwiseProduct(params.shapeCoefficients));
     Eigen::MatrixXd exp_result = exp_pca_basis * (exp_pca_var.cwiseSqrt().cwiseProduct(params.expressionCoefficients));
 
     Eigen::MatrixXd result = shape_result + exp_result;
@@ -130,8 +131,7 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const E
      * @param filename The name of the output OBJ file.
      * @param landmarkIndices A vector of vertex indices representing landmark points.
      *                        These indices will be highlighted in the output if `show_landmarks` is true.
-     * @param show_landmarks (Optional) A boolean flag to indicate whether to include and highlight landmarks in the output.
-     *                       Default is false.
+     * @param show_landmarks TODO: remove this parameter
      */
 
     std::ofstream outFile(filename);
@@ -151,28 +151,17 @@ void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const E
         double y = vertexPosition[3 * v + 1];
         double z = vertexPosition[3 * v + 2];
 
-        // red color for landmarks
-        if (show_landmarks && std::find(landmarkIndices.begin(), landmarkIndices.end(), v) != landmarkIndices.end())
-        {
-            outFile << "v " << x << " " << y << " " << z << " 255 0 0" << std::endl; // landmarks red, rest not stored
-        }
-        else if (!show_landmarks)
-        {
-            outFile << "v " << x << " " << y << " " << z << " " << vertexColors(v, 0) * 255.0 << " " << vertexColors(v, 1) * 255.0 << " " << vertexColors(v, 2) * 255.0 << std::endl;
-        }
+        outFile << "v " << x << " " << y << " " << z << " " << vertexColors(v, 0) * 255.0 << " " << vertexColors(v, 1) * 255.0 << " " << vertexColors(v, 2) * 255.0 << std::endl;
     }
 
-    if (!show_landmarks)
+    long nFaces = faceIndices.size() / 3;
+    for (int f = 0; f < nFaces; f++)
     {
-        long nFaces = faceIndices.size() / 3;
-        for (int f = 0; f < nFaces; f++)
-        {
-            int v1 = faceIndices[f + 0 * nFaces] + 1;
-            int v2 = faceIndices[f + 1 * nFaces] + 1;
-            int v3 = faceIndices[f + 2 * nFaces] + 1;
+        int v1 = faceIndices[f + 0 * nFaces] + 1;
+        int v2 = faceIndices[f + 1 * nFaces] + 1;
+        int v3 = faceIndices[f + 2 * nFaces] + 1;
 
-            outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
-        }
+        outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
     }
 
     outFile.close();

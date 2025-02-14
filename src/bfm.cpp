@@ -112,27 +112,49 @@ void BFM::load_bfm()
     std::cout << "BFM model loading complete." << std::endl;
 }
 
+// void BFM::get_vertex_positions(Eigen::Matrix<double, -1, 1> &vertexPosition, Eigen::VectorXd &shapeCoefficients, Eigen::VectorXd &expressionCoefficients)
+// {
+//     vertexPosition = shape_mean + expr_mean;
+
+//     for (int v = 0; v < no_vertices; v++)
+//     {
+//         for (int i = 0; i < color_shape_size; i++)
+//         {
+//             double shapeFactor = sqrt(shape_var[i]) * shapeCoefficients[i];
+//             vertexPosition[3 * v] += shapeFactor * shape_pca(3 * v, i);
+//             vertexPosition[3 * v + 1] += shapeFactor * shape_pca(3 * v + 1, i);
+//             vertexPosition[3 * v + 2] += shapeFactor * shape_pca(3 * v + 2, i);
+//         }
+
+//         for (int i = 0; i < expr_size; i++)
+//         {
+//             double exprFactor = sqrt(expr_var[i]) * expressionCoefficients[i];
+//             vertexPosition[3 * v] += exprFactor * expr_pca(3 * v, i);
+//             vertexPosition[3 * v + 1] += exprFactor * expr_pca(3 * v + 1, i);
+//             vertexPosition[3 * v + 2] += exprFactor * expr_pca(3 * v + 2, i);
+//         }
+//     }
+// }
+
 void BFM::get_vertex_positions(Eigen::Matrix<double, -1, 1> &vertexPosition, Eigen::VectorXd &shapeCoefficients, Eigen::VectorXd &expressionCoefficients)
 {
     vertexPosition = shape_mean + expr_mean;
 
+    Eigen::MatrixXd shape_pca_var = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(shape_var.data(), 199, 1);
+    Eigen::MatrixXd shape_pca_basis = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(shape_pca.data(), 85764, 199);
+    Eigen::MatrixXd shape_result = shape_pca_basis * (shape_pca_var.cwiseSqrt().cwiseProduct(shapeCoefficients));
+
+    Eigen::MatrixXd exp_pca_var = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(expr_var.data(), 100, 1);
+    Eigen::MatrixXd exp_pca_basis = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(expr_pca.data(), 85764, 100);
+    Eigen::MatrixXd exp_result = exp_pca_basis * (exp_pca_var.cwiseSqrt().cwiseProduct(expressionCoefficients));
+
+    Eigen::MatrixXd result = shape_result + exp_result;
+
     for (int v = 0; v < no_vertices; v++)
     {
-        for (int i = 0; i < color_shape_size; i++)
-        {
-            double shapeFactor = sqrt(shape_var[i]) * shapeCoefficients[i];
-            vertexPosition[3 * v] += shapeFactor * shape_pca(3 * v, i);
-            vertexPosition[3 * v + 1] += shapeFactor * shape_pca(3 * v + 1, i);
-            vertexPosition[3 * v + 2] += shapeFactor * shape_pca(3 * v + 2, i);
-        }
-
-        for (int i = 0; i < expr_size; i++)
-        {
-            double exprFactor = sqrt(expr_var[i]) * expressionCoefficients[i];
-            vertexPosition[3 * v] += exprFactor * expr_pca(3 * v, i);
-            vertexPosition[3 * v + 1] += exprFactor * expr_pca(3 * v + 1, i);
-            vertexPosition[3 * v + 2] += exprFactor * expr_pca(3 * v + 2, i);
-        }
+        vertexPosition[3 * v] = shape_mean[3 * v] + expr_mean[3 * v] + result(3 * v);
+        vertexPosition[3 * v + 1] = shape_mean[3 * v + 1] + expr_mean[3 * v + 1] + result(3 * v + 1);
+        vertexPosition[3 * v + 2] = shape_mean[3 * v + 2] + expr_mean[3 * v + 2] + result(3 * v + 2);
     }
 }
 
