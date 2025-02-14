@@ -1,4 +1,4 @@
-# 2D to 3D - Face Reconstruction
+#Face Reconstruction
 
 This repository contains our implementation for the **3D Scanning & Motion Capture (IN2354)** course at TUM. The main objective is to reconstruct a 2D face model from a single RGB image and enable expression transfer between different images.
 
