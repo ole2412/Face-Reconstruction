@@ -8,7 +8,7 @@ This repository contains our implementation for the **3D Scanning & Motion Captu
    We begin by detecting facial landmarks on the input RGB image. These landmarks guide the alignment between the 2D image and the Basel Face Model (BFM).
 
 2. **Basel Face Model Parameters**  
-   The BFM provides predefined landmarks and a statistical model of facial shape, expression, and color. After detecting the image landmarks, we optimize the model parameters—camera pose, expression, shape, and color—using:
+   The BFM provides predefined landmarks and a statistical model of facial shape, expression, and color. After detecting the image landmarks, we optimize the model parameters—camera pose, expression, shape, and color using:
    - A **sparse term** based on the detected facial landmarks
    - A **dense term** based on the image color
    - A **statistical regularizer** to maintain realistic deformations
