@@ -45,5 +45,9 @@ This will create a file with the 68 landmarks `<ImageName>_landmarks.anl` and a 
 - src
 - tools
 ```
-## Download BMF model and 68 landmarks https://drive.google.com/drive/folders/1Gt5wggAwxiBhJSeqt2tTcLxUhE5Vk45W?usp=drive_link
+## Download BMF Model and 68 Landmarks
+
+Download the Basel Face Model (BFM) and the 68 facial landmarks from the following Google Drive folder:
+
+[Download BMF Model and 68 Landmarks](https://drive.google.com/drive/folders/1Gt5wggAwxiBhJSeqt2tTcLxUhE5Vk45W?usp=drive_link)
 
