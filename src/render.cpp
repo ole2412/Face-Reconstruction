@@ -78,6 +78,43 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
     std::cout << "PLY file successfully written to " << filename << std::endl;
 }
 
+void bfm_create_obj(BFM bfm, OptimizationParameters params) {
+    std::ofstream obj_file("export.obj");
+
+    Eigen::VectorXd shape_mean = bfm.get_shape_mean();
+    Eigen::VectorXd expr_mean = bfm.get_expr_mean();
+    
+    Eigen::MatrixXd vertexColors = bfm.extractVertexColors(params);
+    Eigen::Matrix<double, -1, 1> vertexPosition = shape_mean + expr_mean;
+
+    Eigen::MatrixXd shape_pca_var = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.shape_var.data(), 199, 1);
+    Eigen::MatrixXd shape_pca_basis = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.shape_pca.data(), 85764, 199);
+    
+    Eigen::MatrixXd exp_pca_var = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.expr_var.data(), 100, 1);
+    Eigen::MatrixXd exp_pca_basis = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(bfm.expr_pca.data(), 85764, 100);
+
+    Eigen::MatrixXd shape_result = shape_pca_basis * (shape_pca_var.cwiseSqrt().cwiseProduct(params.shapeCoefficients));
+    Eigen::MatrixXd exp_result = exp_pca_basis * (exp_pca_var.cwiseSqrt().cwiseProduct(params.expressionCoefficients));
+
+    Eigen::MatrixXd result = shape_result + exp_result;
+
+    //MatrixXd color_pca_var = Map<Matrix<double, Dynamic, Dynamic, RowMajor>>(bfm.color_pca_var, 199, 1);
+    //MatrixXd color_pca_basis = Map<Matrix<double, Dynamic, Dynamic, RowMajor>>(bfm.color_pca_basis, 85764, 199);
+    //MatrixXd color_result = color_pca_basis * (color_pca_var.cwiseSqrt().cwiseProduct(params.col_weights));
+
+    for (int i = 0; i < 85764; i += 3) {
+        obj_file << "v " << bfm.shape_mean[i] + bfm.expr_mean[i] + result(i) 
+        << " " << bfm.shape_mean[i + 1] + bfm.expr_mean[i + 1] + result(i + 1) << " " 
+        << bfm.shape_mean[i + 2] + bfm.expr_mean[i + 2] + result(i + 2) << " " << 0 << " " << 0 << " " << 0 << "\n";
+    }
+
+    for (int i = 0; i < 56572; i++) {
+        obj_file << "f " << bfm.triangles[i] + 1 << " " << bfm.triangles[i + 56572] + 1 << " " << bfm.triangles[i + 56572 * 2] + 1 << "\n";
+    }
+
+    obj_file.close();
+}
+
 void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const Eigen::VectorXi &faceIndices, const std::string &filename, std::vector<int> &landmarkIndices, OptimizationParameters &params, bool show_landmarks)
 {
     /**

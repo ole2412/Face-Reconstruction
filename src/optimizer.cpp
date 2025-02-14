@@ -22,7 +22,7 @@ void Optimizer::optimize(
 
     // optimize color
     std::cout << "Optimizing color parameters" << std::endl;
-    optimizeDense(params, observed_landmarks, landmark_indices, image_width, image_height, observed_colors, model_colors, image);
+    //optimizeDense(params, observed_landmarks, landmark_indices, image_width, image_height, observed_colors, model_colors, image);
 
     params.printParameters();
 }
@@ -38,7 +38,7 @@ void Optimizer::optimizeSparse(
     ceres::Problem problem;
 
     // Add residual blocks for each landmark
-    for (size_t i = 0; i < observed_landmarks.size(); ++i)
+    for (size_t i = 0; i < 68; ++i)
     {
         ceres::CostFunction *sparse_cost = CostFunctions::SparseTermCostFunction::Create(observed_landmarks[i], landmark_indices[i], *params.bfm, params.image_width, params.image_height);
         problem.AddResidualBlock(
@@ -52,18 +52,22 @@ void Optimizer::optimizeSparse(
     }
 
     ceres::Solver::Options options;
-    options.linear_solver_type = ceres::DENSE_QR;
-    options.use_nonmonotonic_steps = true;
-    options.preconditioner_type = ceres::JACOBI;
+    options.linear_solver_type = ceres::ITERATIVE_SCHUR;
+    options.num_threads = 12;
+    options.minimizer_progress_to_stdout = true;
 
     // keep the shape and expression constant
     problem.SetParameterBlockConstant(params.shapeCoefficients.data());
     problem.SetParameterBlockConstant(params.expressionCoefficients.data());
 
+/*     ceres::Solver::Options options;
+    options.linear_solver_type = ceres::DENSE_QR;
+    options.use_nonmonotonic_steps = true;
+    options.preconditioner_type = ceres::JACOBI;
     options.function_tolerance = 1e-10;
-    options.max_num_iterations = 10;
+    options.max_num_iterations = 15;
     options.parameter_tolerance = 1e-10;
-    options.minimizer_progress_to_stdout = true;
+    options.minimizer_progress_to_stdout = true; */
 
     // Solve the problem
     ceres::Solver::Summary summary;
@@ -85,7 +89,7 @@ void Optimizer::optimizeSparseReg(
 
     // Add residual blocks for each landmark
     // observed_landmarks.size()
-    for (size_t i = 0; i < observed_landmarks.size(); ++i)
+    for (size_t i = 0; i < 68; ++i)
     {
         ceres::CostFunction *sparse_cost = CostFunctions::SparseTermCostFunction::Create(observed_landmarks[i], landmark_indices[i], *params.bfm, params.image_width, params.image_height);
         problem.AddResidualBlock(
@@ -104,11 +108,11 @@ void Optimizer::optimizeSparseReg(
         nullptr,
         params.shapeCoefficients.data());
 
-    ceres::CostFunction *reg_color_cost = CostFunctions::RegularizationColorCostFunction::Create(params.colorCoefficients, *params.bfm);
+/*     ceres::CostFunction *reg_color_cost = CostFunctions::RegularizationColorCostFunction::Create(params.colorCoefficients, *params.bfm);
     problem.AddResidualBlock(
         reg_color_cost,
         nullptr,
-        params.colorCoefficients.data());
+        params.colorCoefficients.data()); */
 
     ceres::CostFunction *reg_expr_cost = CostFunctions::RegularizationExprCostFunction::Create(params.expressionCoefficients, *params.bfm);
     problem.AddResidualBlock(
@@ -117,17 +121,20 @@ void Optimizer::optimizeSparseReg(
         params.expressionCoefficients.data());
 
     ceres::Solver::Options options;
-    options.linear_solver_type = ceres::DENSE_QR;
-    options.use_nonmonotonic_steps = true;
-    options.preconditioner_type = ceres::JACOBI;
+    options.linear_solver_type = ceres::ITERATIVE_SCHUR;
+    options.num_threads = 12;
+    options.minimizer_progress_to_stdout = true;
+    //options.linear_solver_type = ceres::DENSE_QR;
+    //options.use_nonmonotonic_steps = true;
+    //options.preconditioner_type = ceres::JACOBI;
 
     // keep the shape and expression constant
-    // problem.SetParameterBlockConstant(params.shapeCoefficients.data());
-    // problem.SetParameterBlockConstant(params.expressionCoefficients.data());
+    //problem.SetParameterBlockConstant(params.shapeCoefficients.data());
+    //problem.SetParameterBlockConstant(params.expressionCoefficients.data());
 
-    options.function_tolerance = 1e-10;
-    options.max_num_iterations = 10;
-    options.parameter_tolerance = 1e-10;
+    //options.function_tolerance = 1e-10;
+    //options.max_num_iterations = 10;
+    //options.parameter_tolerance = 1e-10;
     options.minimizer_progress_to_stdout = true;
 
     // Solve the problem

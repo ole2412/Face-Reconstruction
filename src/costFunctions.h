@@ -170,8 +170,8 @@ namespace CostFunctions
             for (size_t i = 0; i < bfm.color_shape_size; i++)
             {
 
-                T shape_std = ceres::sqrt(T(bfm.shape_var[i]));
-                residuals[i] = shape_coefficients[i] / shape_std;
+                //T shape_std = ceres::sqrt(T(bfm.shape_var[i]));
+                residuals[i] = shape_coefficients[i] * T(sqrt(10));
             }
             return true;
         }
@@ -239,7 +239,7 @@ namespace CostFunctions
             for (size_t i = 0; i < bfm.expr_size; i++)
             {
                 T expr_std = ceres::sqrt(T(bfm.expr_var[i]));
-                residuals[i] = expr_coefficients[i] / expr_std;
+                residuals[i] = expr_coefficients[i] * T(sqrt(8));
             }
             return true;
         }
