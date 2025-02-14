@@ -26,6 +26,12 @@ pip install -r requirements.txt
 ### PIPNet
 Download `pipnet_resnet101_10x68x32x256_300w.pth` from https://github.com/DefTruth/torchlm/releases/tag/torchlm-0.1.6-alpha.
 
+## Download BMF Model and 68 Landmarks
+
+Download the Basel Face Model (BFM) and the 68 facial landmarks from the following Google Drive folder:
+
+[Download BMF Model and 68 Landmarks](https://drive.google.com/drive/folders/1Gt5wggAwxiBhJSeqt2tTcLxUhE5Vk45W?usp=drive_link)
+
 #### Source Images
 To be able to run everything, the landmarks need to be extracted using python and PIPNet.
 
@@ -45,9 +51,5 @@ This will create a file with the 68 landmarks `<ImageName>_landmarks.anl` and a 
 - src
 - tools
 ```
-## Download BMF Model and 68 Landmarks
 
-Download the Basel Face Model (BFM) and the 68 facial landmarks from the following Google Drive folder:
-
-[Download BMF Model and 68 Landmarks](https://drive.google.com/drive/folders/1Gt5wggAwxiBhJSeqt2tTcLxUhE5Vk45W?usp=drive_link)
 
