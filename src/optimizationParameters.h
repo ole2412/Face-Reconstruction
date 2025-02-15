@@ -32,7 +32,7 @@ struct OptimizationParameters {
           fov(45),                          // Initialize FOV to a default value 
           image_width(width),                 // Initialize image width
           image_height(height),               // Initialize image height
-          translation(Eigen::Vector3d::Zero()), //Eigen::Vector3d(0, 0, -400)
+          translation(Eigen::Vector3d(0, 0, -400)), //Eigen::Vector3d(0, 0, -400)
           rotation(Eigen::Vector3d::Zero()),
           shapeCoefficients(Eigen::VectorXd::Zero(shapeSize)),
           expressionCoefficients(Eigen::VectorXd::Zero(exprSize)),

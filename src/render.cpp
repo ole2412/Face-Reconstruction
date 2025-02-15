@@ -116,6 +116,62 @@ void bfm_create_obj(BFM bfm, OptimizationParameters params) {
     obj_file.close();
 }
 
+void outputMeshToLandmarks(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks = false) {
+    /**
+     * @brief Outputs a 3D mesh to an OBJ file.
+     * 
+     * This function writes the vertex positions and face indices of a 3D mesh to a file in the OBJ format.
+     * Optionally, specific landmark indices can be highlighted if `show_landmarks` is enabled.
+     * 
+     * @param vertexPosition A matrix containing the 3D coordinates of the vertices.
+     *                       Dimensions: (n x 3), where n is the number of vertices.
+     * @param faceIndices A vector containing the indices defining the faces of the mesh.
+     *                    Each triplet in the vector represents a face (vertex indices are 1-based for OBJ format).
+     * @param filename The name of the output OBJ file.
+     * @param landmarkIndices A vector of vertex indices representing landmark points.
+     *                        These indices will be highlighted in the output if `show_landmarks` is true.
+     * @param show_landmarks (Optional) A boolean flag to indicate whether to include and highlight landmarks in the output.
+     *                       Default is false.
+     */
+
+    std::ofstream outFile(filename);
+
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Could not open file for writing." << std::endl;
+        return;
+    }
+
+    long nVertices = vertexPosition.size() / 3;
+    std::cout << "nVertices: " << nVertices << std::endl;
+    for (int v = 0; v < nVertices; v++) {
+        double x = vertexPosition[3 * v];
+        double y = vertexPosition[3 * v + 1];
+        double z = vertexPosition[3 * v + 2];
+
+        // red color for landmarks
+        if (show_landmarks && std::find(landmarkIndices.begin(), landmarkIndices.end(), v) != landmarkIndices.end()) {
+            outFile << "v " << x << " " << y << " " << z << " 255 0 0" << std::endl; // landmarks red, rest not stored
+        } else if(!show_landmarks) {
+            outFile << "v " << x << " " << y << " " << z << " 0 0 255" << std::endl; // all blue
+        }
+    }
+
+    if (!show_landmarks) {
+        long nFaces = faceIndices.size() / 3;
+        std::cout << "nFaces: " << nFaces << std::endl;
+        for (int f = 0; f < nFaces; f++) {
+            int v1 = faceIndices[f + 0 * nFaces];
+            int v2 = faceIndices[f + 1 * nFaces];
+            int v3 = faceIndices[f + 2 * nFaces];
+
+            outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
+        }
+    }
+    
+    outFile.close();
+    std::cout << "Mesh successfully written to " << filename << std::endl;
+}
+
 void outputMeshToObj(const Eigen::Matrix<double, -1, 1> &vertexPosition, const Eigen::VectorXi &faceIndices, const std::string &filename, std::vector<int> &landmarkIndices, OptimizationParameters &params, bool show_landmarks)
 {
     /**
@@ -257,6 +313,61 @@ void applyTransformationsAndProjectionToVertices(Eigen::Matrix<double, -1, 1> &v
     }
 }
 
+void outputMeshToObj(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks = false) {
+    /**
+     * @brief Outputs a 3D mesh to an OBJ file.
+     * 
+     * This function writes the vertex positions and face indices of a 3D mesh to a file in the OBJ format.
+     * Optionally, specific landmark indices can be highlighted if `show_landmarks` is enabled.
+     * 
+     * @param vertexPosition A matrix containing the 3D coordinates of the vertices.
+     *                       Dimensions: (n x 3), where n is the number of vertices.
+     * @param faceIndices A vector containing the indices defining the faces of the mesh.
+     *                    Each triplet in the vector represents a face (vertex indices are 1-based for OBJ format).
+     * @param filename The name of the output OBJ file.
+     * @param landmarkIndices A vector of vertex indices representing landmark points.
+     *                        These indices will be highlighted in the output if `show_landmarks` is true.
+     * @param show_landmarks (Optional) A boolean flag to indicate whether to include and highlight landmarks in the output.
+     *                       Default is false.
+     */
+
+    std::ofstream outFile(filename);
+
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Could not open file for writing." << std::endl;
+        return;
+    }
+
+    long nVertices = vertexPosition.size() / 3;
+    std::cout << "nVertices: " << nVertices << std::endl;
+    for (int v = 0; v < nVertices; v++) {
+        double x = vertexPosition[3 * v];
+        double y = vertexPosition[3 * v + 1];
+        double z = vertexPosition[3 * v + 2];
+
+        // red color for landmarks
+        if (show_landmarks && std::find(landmarkIndices.begin(), landmarkIndices.end(), v) != landmarkIndices.end()) {
+            outFile << "v " << x << " " << y << " " << z << " 255 0 0" << std::endl; // landmarks red, rest not stored
+        } else if(!show_landmarks) {
+            outFile << "v " << x << " " << y << " " << z << " 0 0 255" << std::endl; // all blue
+        }
+    }
+
+    if (!show_landmarks) {
+        long nFaces = faceIndices.size() / 3;
+        std::cout << "nFaces: " << nFaces << std::endl;
+        for (int f = 0; f < nFaces; f++) {
+            int v1 = faceIndices[f + 0 * nFaces];
+            int v2 = faceIndices[f + 1 * nFaces];
+            int v3 = faceIndices[f + 2 * nFaces];
+
+            outFile << "f " << v1 << " " << v2 << " " << v3 << std::endl;
+        }
+    }
+    
+    outFile.close();
+    std::cout << "Mesh successfully written to " << filename << std::endl;
+}
 void outputMeshToImage(BFM *bfm, const Eigen::Matrix<double, -1, 1> &vertices, const Eigen::VectorXi &triangles, const OptimizationParameters &params, cv::Mat image)
 {
 

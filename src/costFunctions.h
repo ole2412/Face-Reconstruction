@@ -33,9 +33,35 @@ namespace CostFunctions
         template <typename T>
         bool operator()(const T *translation, const T *rotation, const T *fov, const T *shape_coefficients, const T *expression_coefficients, T *residuals) const
         {
+            Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> shape_pca_basis_full(bfm.shape_pca.data(), 85764, 199);
+            Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> exp_pca_basis_full(bfm.expr_pca.data(), 85764, 100);
+
             // Compute the 3D landmark position inside the cost function
             // TODO it gets shape mean but maybe expr mean is also needed.
-            Eigen::Matrix<T, 3, 1> vertex;
+            Eigen::Matrix<T, 3, 1> face_model; // Change to 3x1
+
+            // Initialize with mean shape and expression
+            face_model(0, 0) = T(bfm.shape_mean[landmark_index * 3]) + T(bfm.expr_mean[landmark_index * 3]);
+            face_model(1, 0) = T(bfm.shape_mean[landmark_index * 3 + 1]) + T(bfm.expr_mean[landmark_index * 3 + 1]);
+            face_model(2, 0) = T(bfm.shape_mean[landmark_index * 3 + 2]) + T(bfm.expr_mean[landmark_index * 3 + 2]);
+
+            // Shape PCA contribution (using matrix access with ())
+            for (int i = 0; i < 199; i++) {
+                T value = T(sqrt(bfm.shape_var[i])) * shape_coefficients[i];
+                face_model(0, 0) += T(shape_pca_basis_full(landmark_index * 3, i)) * value; // Use () for matrix access
+                face_model(1, 0) += T(shape_pca_basis_full(landmark_index * 3 + 1, i)) * value; // Use () for matrix access
+                face_model(2, 0) += T(shape_pca_basis_full(landmark_index * 3 + 2, i)) * value; // Use () for matrix access
+            }
+
+            // Expression PCA contribution (using matrix access with ())
+            for (int i = 0; i < 100; i++) {
+                T value = T(sqrt(bfm.expr_var[i])) * expression_coefficients[i];
+                face_model(0, 0) += T(exp_pca_basis_full(landmark_index * 3, i)) * value; // Use () for matrix access
+                face_model(1, 0) += T(exp_pca_basis_full(landmark_index * 3 + 1, i)) * value; // Use () for matrix access
+                face_model(2, 0) += T(exp_pca_basis_full(landmark_index * 3 + 2, i)) * value; // Use () for matrix access
+            }
+            
+/*             Eigen::Matrix<T, 3, 1> vertex;
             vertex << T(bfm.get_shape_mean()(3 * landmark_index) + T(bfm.get_expr_mean()(3 * landmark_index))),
                 T(bfm.get_shape_mean()(3 * landmark_index + 1)) + T(bfm.get_expr_mean()(3 * landmark_index + 1)),
                 T(bfm.get_shape_mean()(3 * landmark_index + 2)) + T(bfm.get_expr_mean()(3 * landmark_index + 2));
@@ -56,7 +82,7 @@ namespace CostFunctions
                 vertex[0] += exprFactor * T(bfm.get_expr_pca()(3 * landmark_index, i));
                 vertex[1] += exprFactor * T(bfm.get_expr_pca()(3 * landmark_index + 1, i));
                 vertex[2] += exprFactor * T(bfm.get_expr_pca()(3 * landmark_index + 2, i));
-            }
+            } */
 
             T rotation_matrix[9];
             T eulerAngles[3] = {rotation[0], rotation[1], rotation[2]};
@@ -69,7 +95,7 @@ namespace CostFunctions
                 rotation_matrix[6], rotation_matrix[7], rotation_matrix[8];
 
             // Rotate the model landmark
-            Eigen::Matrix<T, 3, 1> rotated_point = rotationMatrix * vertex;
+            Eigen::Matrix<T, 3, 1> rotated_point = rotationMatrix * face_model;
 
             // Apply translation
             rotated_point[0] += translation[0];
@@ -187,7 +213,7 @@ namespace CostFunctions
             {
 
                 //T shape_std = ceres::sqrt(T(bfm.shape_var[i]));
-                residuals[i] = shape_coefficients[i] * T(sqrt(10));
+                residuals[i] = shape_coefficients[i] * T(2);
             }
             return true;
         }
@@ -254,8 +280,8 @@ namespace CostFunctions
 
             for (size_t i = 0; i < bfm.expr_size; i++)
             {
-                T expr_std = ceres::sqrt(T(bfm.expr_var[i]));
-                residuals[i] = expr_coefficients[i] * T(sqrt(8));
+                //T expr_std = ceres::sqrt(T(bfm.expr_var[i]));
+                residuals[i] = expr_coefficients[i] * T(2.8);
             }
             return true;
         }

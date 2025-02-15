@@ -11,6 +11,7 @@
 #include "src/optimizationParameters.h"
 #include "src/optimizer.h"
 #include <random>
+#include "landmarkDetection.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,8 +31,10 @@ int main(int argc, char *argv[])
 
     BFM bfm = BFM();
     cv::Mat image = cv::imread(image_path);
+    std::vector<dlib::full_object_detection> detectedLandmarks;
+	//detectedLandmarks = DetectLandmarks("../datasets/Mia2.jpg", true, true);
+    std::cout << "Detected " << detectedLandmarks.size() << " landmarks." << std::endl;
 
-    // Optimize
     std::vector<int> landmarkIndices = bfm.get_landmark_indices();
     std::vector<Eigen::Vector2d> observed_landmarks = readObservedLandmarks(landmark_path);
     OptimizationParameters params(&bfm, bfm.get_shape_size(), bfm.get_expr_size(), bfm.get_color_size(), image.cols, image.rows);
@@ -61,13 +64,15 @@ int main(int argc, char *argv[])
     bfm.get_vertex_positions(vertexPosition, params.shapeCoefficients, params.expressionCoefficients);
     params.printParameters();
     // store to mesh
-    // applyTransformationsAndProjectionToVertices(vertexPosition, params.rotation, params.translation,params.image_width, params.image_height,params.fov);
+    //applyTransformationsAndProjectionToVertices(vertexPosition, params.rotation, params.translation,params.image_width, params.image_height,params.fov);
     Eigen::VectorXi triangles = bfm.get_current_faces();
 
     // TODO: replace this with cpp version of rendering
     // outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + "_all_vertices.obj", landmarkIndices, false);
-    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, params, false);
+    outputMeshToObj(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, params, true);
     // bfm_create_obj(bfm, params);
+    //outputMeshToLandmarks(vertexPosition, triangles, "../output/" + image_name + ".obj", landmarkIndices, true);
+
     outputMeshToPly(triangles, "../output/" + image_name + ".ply", landmarkIndices, image, params, true);
     // store and show the output image
     // cv::imwrite(output_path, image);

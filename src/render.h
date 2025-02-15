@@ -13,5 +13,6 @@ void outputMeshToPly(const Eigen::VectorXi &faceIndices, const std::string &file
 void bfm_create_obj(BFM bfm, const OptimizationParameters params);
 void applyTransformationsAndProjectionToVertices(Eigen::Matrix<double, -1, 1> &vertexPosition, const Eigen::Vector3d &rotation, const Eigen::Vector3d &translation, int image_width, int image_height, double fov);
 std::vector<Eigen::Vector2d> readObservedLandmarks(const std::string &filePath);
+void outputMeshToLandmarks(const Eigen::Matrix<double, -1, 1>& vertexPosition, const Eigen::VectorXi& faceIndices, const std::string& filename, std::vector<int>& landmarkIndices, bool show_landmarks);
 
 #endif
