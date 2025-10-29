@@ -1,3 +1,4 @@
 torch>=1.10.0
 torchlm
 opencv-python>=4.5.5
+pyrender

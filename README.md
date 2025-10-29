@@ -48,6 +48,8 @@ This will create a file with the 68 landmarks `<ImageName>_landmarks.anl` and a 
 - models
     - PIPNet
         - pipnet_resnet101_10x68x32x256_300w.pth
+    - BFM17
+        - model2017-1_face12_nomouth.h5
 - src
 - tools
 ```
