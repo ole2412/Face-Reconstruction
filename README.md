@@ -1,6 +1,7 @@
 # Face Reconstruction
 
 This repository contains our implementation for the **3D Scanning & Motion Capture (IN2354)** course at winter term 2024 at TUM. The main objective is to reconstruct a 2D face model from a single RGB image and enable expression transfer between different images. It was a team project of four members.
+
 My main contributions:
 - Designed and coded the main workflow [main.cpp](main.cpp) 
 - Implemented the landmark detection [landmark_detector.py](tools/landmark_detector.py)
