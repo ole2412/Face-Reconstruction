@@ -1,6 +1,10 @@
 # Face Reconstruction
 
-This repository contains our implementation for the **3D Scanning & Motion Capture (IN2354)** course at winter term 2024 at TUM. The main objective is to reconstruct a 2D face model from a single RGB image and enable expression transfer between different images. It was a team project of four members, where I worked mainly on the BFM optimization and partly on the landmark detection code.
+This repository contains our implementation for the **3D Scanning & Motion Capture (IN2354)** course at winter term 2024 at TUM. The main objective is to reconstruct a 2D face model from a single RGB image and enable expression transfer between different images. It was a team project of four members.
+My main contributions:
+- Designed and coded the main workflow [main.cpp](main.cpp) 
+- Implemented the landmark detection [landmark_detector.py](tools/landmark_detector.py)
+- Coded the BFM face prior interaction [bfm.cpp](src/bfm.cpp)
 
 Facial Expression Transfer - Our pipeline:
 <img width="1017" height="487" alt="image" src="https://github.com/user-attachments/assets/50492c2c-74dc-42bc-b460-34d6480c49c2" />
